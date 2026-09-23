@@ -384,37 +384,37 @@
         </div>
       </div>
 
-      <!-- Main Map Responsive Split Container (420px Fixed Left Sidebar + Flex Right Map) -->
-      <div class="flex flex-col lg:flex-row gap-6 w-full items-stretch">
+      <!-- Main Map Responsive Split Container (400px Fixed Left Sidebar + Flex-1 Right Map) -->
+      <div class="flex flex-col lg:flex-row gap-6 w-full items-stretch relative">
         
-        <!-- Left Column: 420px Scrollable POI Cards List -->
-        <div class="w-full lg:w-[420px] lg:flex-shrink-0 flex flex-col h-[600px] bg-stone-50/90 rounded-3xl border border-istria-byzantine/30 shadow-paper-card p-4 overflow-hidden">
-          <div class="flex items-center justify-between pb-3 border-b border-istria-stone mb-3">
+        <!-- Left Column: 400px Fixed Width Scrollable POI Cards List -->
+        <div class="w-full lg:w-[400px] lg:min-w-[400px] lg:max-w-[400px] flex-shrink-0 flex flex-col h-[600px] bg-stone-50/95 rounded-3xl border border-istria-byzantine/30 shadow-paper-card p-4 overflow-hidden z-20">
+          <div class="flex items-center justify-between pb-3 border-b border-istria-stone mb-3 flex-shrink-0">
             <span class="font-cinzel text-xs font-bold text-istria-terracotta uppercase tracking-wider">
               <i class="fa-solid fa-list-ul mr-1.5"></i> 走讀站點導覽清單
             </span>
             <span class="text-xs text-istria-slate font-serif">點擊卡片同步地圖</span>
           </div>
 
-          <!-- Single Column Vertical List of POI Cards -->
-          <div id="poi-card-container" class="flex-1 overflow-y-auto pr-1 space-y-3">
+          <!-- Single Column Vertical List of POI Cards (Strict Column Flow) -->
+          <div id="poi-card-container" class="flex-1 flex flex-col gap-3 overflow-y-auto overflow-x-hidden pr-1 w-full" style="display: flex !important; flex-direction: column !important;">
             <!-- Rendered dynamically -->
           </div>
         </div>
 
         <!-- Right Column: Interactive Leaflet OSM Map -->
-        <div class="w-full lg:flex-1 h-[600px] rounded-3xl overflow-hidden border border-istria-byzantine/30 shadow-museum relative">
+        <div class="w-full lg:flex-1 min-w-0 h-[600px] rounded-3xl overflow-hidden border border-istria-byzantine/30 shadow-museum relative z-10">
           <!-- The Leaflet Map Viewport -->
-          <div id="porec-map" class="w-full h-full z-10"></div>
+          <div id="porec-map" class="w-full h-full"></div>
           
           <!-- Route Overview Button -->
-          <button onclick="fitMapToRoute()" class="absolute top-4 left-4 z-20 bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-xl border border-istria-byzantine/40 text-xs font-cinzel font-bold text-istria-charcoal hover:bg-istria-stone shadow-md transition-all flex items-center gap-1.5">
+          <button onclick="fitMapToRoute()" class="absolute top-4 left-4 z-[500] bg-white/95 backdrop-blur-md px-3.5 py-2 rounded-xl border border-istria-byzantine/40 text-xs font-cinzel font-bold text-istria-charcoal hover:bg-istria-stone shadow-md transition-all flex items-center gap-1.5">
             <i class="fa-solid fa-arrows-to-eye text-istria-venetian"></i>
             <span>全線總覽</span>
           </button>
 
           <!-- Top Right Legend -->
-          <div class="absolute top-4 right-4 z-20 bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-istria-byzantine/40 text-xs text-istria-charcoal shadow-lg pointer-events-none hidden sm:block">
+          <div class="absolute top-4 right-4 z-[500] bg-white/95 backdrop-blur-md px-4 py-2.5 rounded-2xl border border-istria-byzantine/40 text-xs text-istria-charcoal shadow-lg pointer-events-none hidden sm:block">
             <div class="flex items-center gap-2 font-cinzel text-istria-terracotta font-bold mb-0.5">
               <i class="fa-solid fa-route"></i>
               DECUMANUS WALKING AXIS
@@ -423,7 +423,7 @@
           </div>
 
           <!-- Bottom Floating Active Inspector Bar -->
-          <div id="map-active-badge" class="absolute bottom-4 left-4 right-4 z-20 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-istria-byzantine/40 shadow-2xl transition-all duration-300">
+          <div id="map-active-badge" class="absolute bottom-4 left-4 right-4 z-[500] bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-istria-byzantine/40 shadow-2xl transition-all duration-300">
             <div class="flex items-center justify-between">
               <div class="flex items-center gap-3">
                 <span id="badge-icon" class="w-9 h-9 rounded-xl bg-istria-venetian text-white flex items-center justify-center font-bold text-sm shadow-sm">
@@ -1037,7 +1037,7 @@
         // Clean Vertical Sidebar Card
         const card = document.createElement('div');
         card.id = `poi-card-${poi.id}`;
-        card.className = `p-3.5 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-center ${
+        card.className = `w-full flex-shrink-0 p-3.5 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-center box-border ${
           poi.id === activePOI.id 
             ? 'bg-white border-istria-byzantine shadow-md ring-1 ring-istria-gold' 
             : 'bg-white/80 border-istria-stone hover:border-istria-byzantine/50 hover:bg-white'
@@ -1079,11 +1079,11 @@
 
       // Update Sidebar Cards
       document.querySelectorAll('[id^="poi-card-"]').forEach(el => {
-        el.className = 'p-3.5 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-center bg-white/80 border-istria-stone hover:border-istria-byzantine/50 hover:bg-white';
+        el.className = 'w-full flex-shrink-0 p-3.5 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-center box-border bg-white/80 border-istria-stone hover:border-istria-byzantine/50 hover:bg-white';
       });
       const activeCard = document.getElementById(`poi-card-${id}`);
       if (activeCard) {
-        activeCard.className = 'p-3.5 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-center bg-white border-istria-byzantine shadow-md ring-1 ring-istria-gold';
+        activeCard.className = 'w-full flex-shrink-0 p-3.5 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-center box-border bg-white border-istria-byzantine shadow-md ring-1 ring-istria-gold';
         activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
 
