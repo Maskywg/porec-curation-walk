@@ -65,9 +65,12 @@
     /* Prominent Sidebar Card List Scrollbar */
     #poi-card-container {
       scrollbar-width: thin;
-      scrollbar-color: #A84232 rgba(201, 158, 56, 0.15);
+      scrollbar-color: #A84232 rgba(201, 158, 56, 0.18);
       cursor: grab;
       user-select: none;
+      -webkit-user-select: none;
+      touch-action: pan-y;
+      overscroll-behavior: contain;
     }
     #poi-card-container:active {
       cursor: grabbing;
@@ -76,7 +79,7 @@
       width: 8px;
     }
     #poi-card-container::-webkit-scrollbar-track {
-      background: rgba(201, 158, 56, 0.12);
+      background: rgba(201, 158, 56, 0.15);
       border-radius: 8px;
     }
     #poi-card-container::-webkit-scrollbar-thumb {
@@ -414,15 +417,15 @@
       <div class="flex flex-col lg:flex-row gap-6 w-full items-stretch relative">
         
         <!-- Left Column: 440px Fixed Width Scrollable POI Cards List -->
-        <div class="w-full lg:w-[440px] lg:min-w-[440px] lg:max-w-[440px] flex-shrink-0 flex flex-col h-[620px] bg-stone-50/95 rounded-3xl border border-istria-byzantine/30 shadow-paper-card p-4 overflow-hidden z-20">
+        <div class="w-full lg:w-[440px] lg:min-w-[440px] lg:max-w-[440px] flex-shrink-0 flex flex-col h-[640px] max-h-[640px] bg-stone-50/95 rounded-3xl border border-istria-byzantine/30 shadow-paper-card p-4 overflow-hidden z-20 box-border">
           
           <!-- Header with Up / Down Quick Scroll Controls -->
-          <div class="flex items-center justify-between pb-3 border-b border-istria-stone mb-2.5 flex-shrink-0">
+          <div class="flex items-center justify-between pb-2.5 border-b border-istria-stone mb-2 flex-shrink-0">
             <div>
               <span class="font-cinzel text-xs font-bold text-istria-terracotta uppercase tracking-wider block">
                 <i class="fa-solid fa-list-ul mr-1.5"></i> 走讀站點導覽 (10 站)
               </span>
-              <span class="text-[11px] text-istria-slate font-serif">點擊卡片同步地圖 ｜ 支援上下拉動</span>
+              <span class="text-[11px] text-istria-slate font-serif">點擊同步地圖 ｜ 支援滾輪、拖曳與站點速選</span>
             </div>
             <!-- Scroll Step Buttons -->
             <div class="flex items-center gap-1.5">
@@ -435,14 +438,19 @@
             </div>
           </div>
 
+          <!-- Quick Station Jump Bar (01 to 10) -->
+          <div id="station-quick-pills" class="flex items-center justify-between gap-1 py-1 px-0.5 mb-2 overflow-x-auto flex-shrink-0">
+            <!-- Rendered dynamically -->
+          </div>
+
           <!-- Single Column Vertical List of POI Cards (Scrollable & Drag-to-scroll) -->
-          <div id="poi-card-container" class="flex-1 flex flex-col gap-3 overflow-y-auto overflow-x-hidden pr-1.5 w-full" style="display: flex !important; flex-direction: column !important;">
+          <div id="poi-card-container" class="flex-1 flex flex-col gap-3 overflow-y-auto overflow-x-hidden pr-1.5 w-full select-none" style="display: flex !important; flex-direction: column !important; min-height: 0 !important; max-height: 480px !important; overflow-y: auto !important; -webkit-overflow-scrolling: touch;">
             <!-- Rendered dynamically -->
           </div>
 
           <!-- Footer Scroll Cue / Fast Navigation Indicator -->
           <div class="pt-2.5 mt-2 border-t border-istria-stone flex items-center justify-between text-[11px] text-istria-slate font-serif flex-shrink-0">
-            <span id="scroll-progress-label">↕ 滑鼠可按住上下拖曳拉動</span>
+            <span id="scroll-progress-label">↕ 滑鼠拖曳或滾輪瀏覽全 10 站</span>
             <button onclick="scrollPoiList('down')" class="text-istria-venetian font-bold hover:underline flex items-center gap-1">
               <span>看下一站</span>
               <i class="fa-solid fa-chevron-down text-[10px]"></i>
@@ -451,7 +459,7 @@
         </div>
 
         <!-- Right Column: Interactive Leaflet OSM Map -->
-        <div class="w-full lg:flex-1 min-w-0 h-[620px] rounded-3xl overflow-hidden border border-istria-byzantine/30 shadow-museum relative z-10">
+        <div class="w-full lg:flex-1 min-w-0 h-[640px] rounded-3xl overflow-hidden border border-istria-byzantine/30 shadow-museum relative z-10">
           <!-- The Leaflet Map Viewport -->
           <div id="porec-map" class="w-full h-full"></div>
           
@@ -1046,6 +1054,34 @@
     }
 
     // --- 5. RENDER MAP MARKERS & POI CARDS (TWO-WAY SYNC) ---
+    function renderQuickPills() {
+      const container = document.getElementById('station-quick-pills');
+      if (!container) return;
+      container.innerHTML = '';
+      
+      const filtered = currentFilter === 'all' 
+        ? POI_DATA 
+        : POI_DATA.filter(item => item.era === currentFilter);
+
+      filtered.forEach((poi) => {
+        const btn = document.createElement('button');
+        btn.id = `pill-poi-${poi.id}`;
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          selectPOI(poi.id, true);
+        };
+        const isActive = poi.id === activePOI.id;
+        btn.className = `flex-1 min-w-[28px] py-1 rounded-lg text-[10px] font-cinzel font-bold transition-all border flex items-center justify-center ${
+          isActive 
+            ? 'bg-istria-venetian text-white border-istria-venetian shadow-sm scale-105' 
+            : 'bg-white text-istria-slate hover:bg-istria-stone border-istria-stone/80 hover:text-istria-dark'
+        }`;
+        btn.textContent = `${poi.id < 10 ? '0' : ''}${poi.id}`;
+        btn.title = poi.title;
+        container.appendChild(btn);
+      });
+    }
+
     function renderMarkers() {
       markersLayerGroup.clearLayers();
       const poiContainer = document.getElementById('poi-card-container');
@@ -1085,33 +1121,38 @@
         // Clean Vertical Sidebar Card
         const card = document.createElement('div');
         card.id = `poi-card-${poi.id}`;
-        card.className = `w-full flex-shrink-0 p-4 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-start box-border ${
+        card.className = `w-full flex-shrink-0 p-4 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-start box-border select-none ${
           poi.id === activePOI.id 
             ? 'bg-white border-istria-byzantine shadow-md ring-1 ring-istria-gold' 
             : 'bg-white/80 border-istria-stone hover:border-istria-byzantine/50 hover:bg-white'
         }`;
         
-        card.onclick = () => selectPOI(poi.id, true);
+        card.onclick = (e) => {
+          if (window._isDraggingPoi) return; // Ignore click if dragging
+          selectPOI(poi.id, true);
+        };
 
         card.innerHTML = `
-          <div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 relative border border-istria-byzantine/30 shadow-sm mt-0.5">
-            <img src="${poi.image}" alt="${poi.title}" class="w-full h-full object-cover" />
+          <div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 relative border border-istria-byzantine/30 shadow-sm mt-0.5 pointer-events-none select-none">
+            <img src="${poi.image}" alt="${poi.title}" draggable="false" class="w-full h-full object-cover pointer-events-none" />
             <span class="absolute top-1 left-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] text-white shadow-md" style="background-color: ${poi.color};">
               <i class="fa-solid ${poi.iconClass}"></i>
             </span>
           </div>
-          <div class="flex-grow min-w-0">
+          <div class="flex-grow min-w-0 pointer-events-none">
             <div class="flex items-center justify-between gap-1">
               <span class="text-[9px] font-cinzel uppercase px-1.5 py-0.2 rounded bg-istria-dark/5 text-istria-terracotta font-bold">${poi.eraLabel}</span>
             </div>
             <h4 class="font-serif text-sm font-bold text-istria-dark leading-snug mt-1 break-words">${poi.title}</h4>
             <p class="text-xs text-istria-slate font-serif leading-relaxed mt-1 break-words">${poi.summary}</p>
           </div>
-          <i class="fa-solid fa-chevron-right text-xs text-istria-slate/40 flex-shrink-0 mt-2"></i>
+          <i class="fa-solid fa-chevron-right text-xs text-istria-slate/40 flex-shrink-0 mt-2 pointer-events-none"></i>
         `;
 
         poiContainer.appendChild(card);
       });
+
+      renderQuickPills();
     }
 
     // --- 6. SELECT POI (TWO-WAY INTERACTIVE LINKAGE) ---
@@ -1127,12 +1168,21 @@
 
       // Update Sidebar Cards
       document.querySelectorAll('[id^="poi-card-"]').forEach(el => {
-        el.className = 'w-full flex-shrink-0 p-4 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-start box-border bg-white/80 border-istria-stone hover:border-istria-byzantine/50 hover:bg-white';
+        el.className = 'w-full flex-shrink-0 p-4 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-start box-border select-none bg-white/80 border-istria-stone hover:border-istria-byzantine/50 hover:bg-white';
       });
       const activeCard = document.getElementById(`poi-card-${id}`);
       if (activeCard) {
-        activeCard.className = 'w-full flex-shrink-0 p-4 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-start box-border bg-white border-istria-byzantine shadow-md ring-1 ring-istria-gold';
+        activeCard.className = 'w-full flex-shrink-0 p-4 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-start box-border select-none bg-white border-istria-byzantine shadow-md ring-1 ring-istria-gold';
         activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      // Update Quick Station Pills
+      document.querySelectorAll('[id^="pill-poi-"]').forEach(el => {
+        el.className = 'flex-1 min-w-[28px] py-1 rounded-lg text-[10px] font-cinzel font-bold transition-all border flex items-center justify-center bg-white text-istria-slate hover:bg-istria-stone border-istria-stone/80 hover:text-istria-dark';
+      });
+      const activePill = document.getElementById(`pill-poi-${id}`);
+      if (activePill) {
+        activePill.className = 'flex-1 min-w-[28px] py-1 rounded-lg text-[10px] font-cinzel font-bold transition-all border flex items-center justify-center bg-istria-venetian text-white border-istria-venetian shadow-sm scale-105';
       }
 
       // Update Floating Bottom Badge
@@ -1337,10 +1387,12 @@
     }
 
     // --- 12. SCROLL & DRAG-TO-SCROLL CONTROLS ---
+    window._isDraggingPoi = false;
+
     function scrollPoiList(direction) {
       const container = document.getElementById('poi-card-container');
       if (!container) return;
-      const scrollStep = 180;
+      const scrollStep = 220;
       if (direction === 'up') {
         container.scrollBy({ top: -scrollStep, behavior: 'smooth' });
       } else {
@@ -1353,34 +1405,57 @@
       if (!container) return;
 
       let isDown = false;
-      let startY;
-      let scrollTop;
-      let moved = false;
+      let startY = 0;
+      let scrollTop = 0;
+      let hasMoved = false;
 
+      // Mouse Drag handlers
       container.addEventListener('mousedown', (e) => {
+        if (e.target.tagName.toLowerCase() === 'button' || e.target.closest('button')) return;
         isDown = true;
-        moved = false;
-        startY = e.pageY - container.offsetTop;
+        hasMoved = false;
+        window._isDraggingPoi = false;
+        startY = e.clientY;
         scrollTop = container.scrollTop;
+        container.style.cursor = 'grabbing';
       });
 
-      container.addEventListener('mouseleave', () => {
-        isDown = false;
-      });
-
-      container.addEventListener('mouseup', () => {
-        isDown = false;
-      });
-
-      container.addEventListener('mousemove', (e) => {
+      window.addEventListener('mousemove', (e) => {
         if (!isDown) return;
-        const y = e.pageY - container.offsetTop;
-        const walk = (y - startY) * 1.5;
-        if (Math.abs(walk) > 5) {
-          moved = true;
+        const deltaY = e.clientY - startY;
+        if (Math.abs(deltaY) > 4) {
+          hasMoved = true;
+          window._isDraggingPoi = true;
         }
-        container.scrollTop = scrollTop - walk;
+        container.scrollTop = scrollTop - deltaY;
       });
+
+      window.addEventListener('mouseup', () => {
+        if (isDown) {
+          isDown = false;
+          container.style.cursor = 'grab';
+          if (hasMoved) {
+            setTimeout(() => {
+              window._isDraggingPoi = false;
+            }, 60);
+          } else {
+            window._isDraggingPoi = false;
+          }
+        }
+      });
+
+      // Touch drag handlers (Mobile & Tablet)
+      let touchStartY = 0;
+      let touchScrollTop = 0;
+      container.addEventListener('touchstart', (e) => {
+        touchStartY = e.touches[0].clientY;
+        touchScrollTop = container.scrollTop;
+      }, { passive: true });
+
+      container.addEventListener('touchmove', (e) => {
+        const deltaY = e.touches[0].clientY - touchStartY;
+        container.scrollTop = touchScrollTop - deltaY;
+      }, { passive: true });
 
       // Update progress indicator on scroll
       container.addEventListener('scroll', () => {
@@ -1389,7 +1464,7 @@
         const percent = Math.min(100, Math.round((current / (maxScroll || 1)) * 100));
         const label = document.getElementById('scroll-progress-label');
         if (label) {
-          if (percent >= 95) {
+          if (percent >= 90) {
             label.textContent = `✓ 已瀏覽至底部（共 10 站）`;
           } else {
             label.textContent = `↕ 已瀏覽 ${percent}% ｜ 可繼續往下拉動`;
