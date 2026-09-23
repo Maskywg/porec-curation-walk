@@ -416,16 +416,16 @@
       <!-- Main Map Responsive Split Container (440px Fixed Left Sidebar + Flex-1 Right Map) -->
       <div class="flex flex-col lg:flex-row gap-6 w-full items-stretch relative">
         
-        <!-- Left Column: 440px Fixed Width Scrollable POI Cards List with Interactive Drag Lever (上下拉霸) -->
+        <!-- Left Column: 440px Fixed Width Scrollable POI Cards List with Pure Vertical 10-Station Guide & Drag Lever -->
         <div class="w-full lg:w-[440px] lg:min-w-[440px] lg:max-w-[440px] flex-shrink-0 flex flex-col h-[640px] max-h-[640px] bg-stone-50/95 rounded-3xl border border-istria-byzantine/30 shadow-paper-card p-4 overflow-hidden z-20 box-border">
           
           <!-- Header with Up / Down Quick Scroll Controls -->
-          <div class="flex items-center justify-between pb-2.5 border-b border-istria-stone mb-2 flex-shrink-0">
+          <div class="flex items-center justify-between pb-3 border-b border-istria-stone mb-2.5 flex-shrink-0">
             <div>
               <span class="font-cinzel text-xs font-bold text-istria-terracotta uppercase tracking-wider block">
-                <i class="fa-solid fa-list-ul mr-1.5"></i> 走讀站點導覽 (10 站)
+                <i class="fa-solid fa-list-ol mr-1.5"></i> 走讀站點導覽 (10 站・直式導引)
               </span>
-              <span class="text-[11px] text-istria-slate font-serif">支援右側「上下移動拉霸」與即時切換</span>
+              <span class="text-[11px] text-istria-slate font-serif">點擊右側直式站點或拖曳拉霸切換</span>
             </div>
             <!-- Scroll Step Buttons -->
             <div class="flex items-center gap-1.5">
@@ -438,12 +438,7 @@
             </div>
           </div>
 
-          <!-- Quick Station Jump Bar (01 to 10) -->
-          <div id="station-quick-pills" class="flex items-center justify-between gap-1 py-1 px-0.5 mb-2 overflow-x-auto flex-shrink-0">
-            <!-- Rendered dynamically -->
-          </div>
-
-          <!-- POI List and Vertical Lever ("上下拉霸") Split Row -->
+          <!-- POI List (Left) and Vertical 10-Station Rail & Drag Lever (Right) -->
           <div class="flex-1 min-h-0 flex gap-2.5 items-stretch relative overflow-hidden">
             
             <!-- Cards Container (Scrollable) -->
@@ -451,36 +446,28 @@
               <!-- Rendered dynamically -->
             </div>
 
-            <!-- Vertical Draggable Lever ("上下移動拉霸") -->
-            <div id="lever-track" class="w-8 flex-shrink-0 bg-stone-200/90 hover:bg-stone-200/100 rounded-2xl border border-istria-byzantine/40 shadow-inner relative flex flex-col justify-between items-center py-1.5 select-none cursor-pointer transition-colors" title="按住上下拖曳拉霸移動站點">
-              <!-- Top Jump Button -->
-              <button type="button" onclick="scrollPoiList('up')" class="w-6 h-6 rounded-lg bg-white/95 text-istria-slate hover:text-istria-venetian flex items-center justify-center text-[10px] shadow-xs z-10">
+            <!-- Right Column: Pure Vertical 10-Station Rail & Interactive Lever ("直式 10 站軌道與上下拉霸") -->
+            <div id="lever-track" class="w-10 sm:w-11 flex-shrink-0 bg-stone-200/80 hover:bg-stone-200/95 rounded-2xl border border-istria-byzantine/40 shadow-inner relative flex flex-col justify-between items-center py-2 select-none cursor-pointer transition-colors" title="直式 10 站導覽：點擊站點或按住拉霸上下拖曳">
+              <!-- Top Up Step -->
+              <button type="button" onclick="scrollPoiList('up')" class="w-7 h-5 rounded-md bg-white/90 text-istria-slate hover:text-istria-venetian flex items-center justify-center text-[9px] shadow-xs z-10 flex-shrink-0 mb-1" title="往上一站">
                 <i class="fa-solid fa-chevron-up"></i>
               </button>
               
-              <!-- 10 Station Tick Guides -->
-              <div class="absolute inset-y-8 inset-x-0 flex flex-col justify-between items-center py-2 pointer-events-none opacity-40">
-                <span class="w-1.5 h-1.5 rounded-full bg-istria-charcoal"></span>
-                <span class="w-1.5 h-1.5 rounded-full bg-istria-charcoal"></span>
-                <span class="w-1.5 h-1.5 rounded-full bg-istria-charcoal"></span>
-                <span class="w-1.5 h-1.5 rounded-full bg-istria-charcoal"></span>
-                <span class="w-1.5 h-1.5 rounded-full bg-istria-charcoal"></span>
-                <span class="w-1.5 h-1.5 rounded-full bg-istria-charcoal"></span>
-                <span class="w-1.5 h-1.5 rounded-full bg-istria-charcoal"></span>
-                <span class="w-1.5 h-1.5 rounded-full bg-istria-charcoal"></span>
-                <span class="w-1.5 h-1.5 rounded-full bg-istria-charcoal"></span>
-                <span class="w-1.5 h-1.5 rounded-full bg-istria-charcoal"></span>
+              <!-- 10 Vertical Station Nodes Container (Stacked vertically 01 to 10) -->
+              <div id="vertical-station-nodes" class="w-full flex-1 flex flex-col justify-between items-center relative py-1 z-10">
+                <!-- 10 Station vertical buttons rendered dynamically -->
               </div>
 
-              <!-- Draggable Lever Thumb ("上下拉霸滑塊") -->
-              <div id="lever-thumb" class="absolute left-1 right-1 h-14 rounded-xl bg-gradient-to-b from-istria-terracotta to-istria-venetian text-white shadow-md border border-white/80 flex flex-col items-center justify-center cursor-grab active:cursor-grabbing hover:brightness-110 select-none z-20" style="top: 30px;">
-                <i class="fa-solid fa-grip-lines text-[10px] text-istria-gold leading-none mb-0.5 pointer-events-none"></i>
-                <span id="lever-thumb-text" class="text-[9px] font-cinzel font-bold leading-none tracking-tighter pointer-events-none">01</span>
-                <i class="fa-solid fa-arrows-up-down text-[8px] text-white/80 leading-none mt-0.5 pointer-events-none"></i>
+              <!-- Draggable Lever Thumb ("直式上下拉霸滑塊") -->
+              <div id="lever-thumb" class="absolute left-1 right-1 h-9 rounded-xl bg-gradient-to-r from-istria-terracotta to-istria-venetian text-white shadow-md border-2 border-white/90 flex items-center justify-center cursor-grab active:cursor-grabbing hover:brightness-110 select-none z-20 pointer-events-auto" style="top: 32px;">
+                <div class="flex items-center gap-1 leading-none pointer-events-none">
+                  <i class="fa-solid fa-grip-vertical text-[8px] text-istria-gold/90"></i>
+                  <span id="lever-thumb-text" class="text-[9px] font-cinzel font-bold tracking-tight">01</span>
+                </div>
               </div>
 
-              <!-- Bottom Jump Button -->
-              <button type="button" onclick="scrollPoiList('down')" class="w-6 h-6 rounded-lg bg-white/95 text-istria-slate hover:text-istria-venetian flex items-center justify-center text-[10px] shadow-xs z-10">
+              <!-- Bottom Down Step -->
+              <button type="button" onclick="scrollPoiList('down')" class="w-7 h-5 rounded-md bg-white/90 text-istria-slate hover:text-istria-venetian flex items-center justify-center text-[9px] shadow-xs z-10 flex-shrink-0 mt-1" title="往下一站">
                 <i class="fa-solid fa-chevron-down"></i>
               </button>
             </div>
@@ -489,7 +476,7 @@
 
           <!-- Footer Scroll Cue / Fast Navigation Indicator -->
           <div class="pt-2.5 mt-2 border-t border-istria-stone flex items-center justify-between text-[11px] text-istria-slate font-serif flex-shrink-0">
-            <span id="scroll-progress-label">↕ 右側拉霸可按住上下拖曳</span>
+            <span id="scroll-progress-label">↕ 右側直式 10 站軌道可點選或拉動</span>
             <button onclick="scrollPoiList('down')" class="text-istria-venetian font-bold hover:underline flex items-center gap-1">
               <span>看下一站</span>
               <i class="fa-solid fa-chevron-down text-[10px]"></i>
@@ -1093,8 +1080,8 @@
     }
 
     // --- 5. RENDER MAP MARKERS & POI CARDS (TWO-WAY SYNC) ---
-    function renderQuickPills() {
-      const container = document.getElementById('station-quick-pills');
+    function renderVerticalStationRail() {
+      const container = document.getElementById('vertical-station-nodes');
       if (!container) return;
       container.innerHTML = '';
       
@@ -1104,19 +1091,19 @@
 
       filtered.forEach((poi) => {
         const btn = document.createElement('button');
-        btn.id = `pill-poi-${poi.id}`;
+        btn.id = `v-station-node-${poi.id}`;
         btn.onclick = (e) => {
           e.stopPropagation();
           selectPOI(poi.id, true);
         };
         const isActive = poi.id === activePOI.id;
-        btn.className = `flex-1 min-w-[28px] py-1 rounded-lg text-[10px] font-cinzel font-bold transition-all border flex items-center justify-center ${
+        btn.className = `w-7 h-7 rounded-lg text-[9px] font-cinzel font-bold transition-all flex items-center justify-center border z-10 ${
           isActive 
-            ? 'bg-istria-venetian text-white border-istria-venetian shadow-sm scale-105' 
-            : 'bg-white text-istria-slate hover:bg-istria-stone border-istria-stone/80 hover:text-istria-dark'
+            ? 'bg-istria-venetian text-white border-istria-gold shadow-sm scale-110 font-black ring-1 ring-istria-gold' 
+            : 'bg-white/95 text-istria-charcoal border-istria-stone/80 hover:bg-white hover:text-istria-venetian hover:border-istria-byzantine'
         }`;
         btn.textContent = `${poi.id < 10 ? '0' : ''}${poi.id}`;
-        btn.title = poi.title;
+        btn.title = `第 ${poi.id} 站：${poi.title}`;
         container.appendChild(btn);
       });
     }
@@ -1191,7 +1178,7 @@
         poiContainer.appendChild(card);
       });
 
-      renderQuickPills();
+      renderVerticalStationRail();
     }
 
     // --- 6. SELECT POI (TWO-WAY INTERACTIVE LINKAGE) ---
@@ -1215,13 +1202,13 @@
         activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
 
-      // Update Quick Station Pills
-      document.querySelectorAll('[id^="pill-poi-"]').forEach(el => {
-        el.className = 'flex-1 min-w-[28px] py-1 rounded-lg text-[10px] font-cinzel font-bold transition-all border flex items-center justify-center bg-white text-istria-slate hover:bg-istria-stone border-istria-stone/80 hover:text-istria-dark';
+      // Update Vertical Station Rail Nodes
+      document.querySelectorAll('[id^="v-station-node-"]').forEach(el => {
+        el.className = 'w-7 h-7 rounded-lg text-[9px] font-cinzel font-bold transition-all flex items-center justify-center border z-10 bg-white/95 text-istria-charcoal border-istria-stone/80 hover:bg-white hover:text-istria-venetian hover:border-istria-byzantine';
       });
-      const activePill = document.getElementById(`pill-poi-${id}`);
-      if (activePill) {
-        activePill.className = 'flex-1 min-w-[28px] py-1 rounded-lg text-[10px] font-cinzel font-bold transition-all border flex items-center justify-center bg-istria-venetian text-white border-istria-venetian shadow-sm scale-105';
+      const activeNode = document.getElementById(`v-station-node-${id}`);
+      if (activeNode) {
+        activeNode.className = 'w-7 h-7 rounded-lg text-[9px] font-cinzel font-bold transition-all flex items-center justify-center border z-10 bg-istria-venetian text-white border-istria-gold shadow-sm scale-110 font-black ring-1 ring-istria-gold';
       }
 
       // Update Floating Bottom Badge
