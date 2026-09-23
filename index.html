@@ -384,11 +384,11 @@
         </div>
       </div>
 
-      <!-- Main Map Responsive Split Container (400px Fixed Left Sidebar + Flex-1 Right Map) -->
+      <!-- Main Map Responsive Split Container (440px Fixed Left Sidebar + Flex-1 Right Map) -->
       <div class="flex flex-col lg:flex-row gap-6 w-full items-stretch relative">
         
-        <!-- Left Column: 400px Fixed Width Scrollable POI Cards List -->
-        <div class="w-full lg:w-[400px] lg:min-w-[400px] lg:max-w-[400px] flex-shrink-0 flex flex-col h-[600px] bg-stone-50/95 rounded-3xl border border-istria-byzantine/30 shadow-paper-card p-4 overflow-hidden z-20">
+        <!-- Left Column: 440px Fixed Width Scrollable POI Cards List -->
+        <div class="w-full lg:w-[440px] lg:min-w-[440px] lg:max-w-[440px] flex-shrink-0 flex flex-col h-[620px] bg-stone-50/95 rounded-3xl border border-istria-byzantine/30 shadow-paper-card p-4 overflow-hidden z-20">
           <div class="flex items-center justify-between pb-3 border-b border-istria-stone mb-3 flex-shrink-0">
             <span class="font-cinzel text-xs font-bold text-istria-terracotta uppercase tracking-wider">
               <i class="fa-solid fa-list-ul mr-1.5"></i> 走讀站點導覽清單
@@ -397,13 +397,13 @@
           </div>
 
           <!-- Single Column Vertical List of POI Cards (Strict Column Flow) -->
-          <div id="poi-card-container" class="flex-1 flex flex-col gap-3 overflow-y-auto overflow-x-hidden pr-1 w-full" style="display: flex !important; flex-direction: column !important;">
+          <div id="poi-card-container" class="flex-1 flex flex-col gap-3 overflow-y-auto overflow-x-hidden pr-1.5 w-full" style="display: flex !important; flex-direction: column !important;">
             <!-- Rendered dynamically -->
           </div>
         </div>
 
         <!-- Right Column: Interactive Leaflet OSM Map -->
-        <div class="w-full lg:flex-1 min-w-0 h-[600px] rounded-3xl overflow-hidden border border-istria-byzantine/30 shadow-museum relative z-10">
+        <div class="w-full lg:flex-1 min-w-0 h-[620px] rounded-3xl overflow-hidden border border-istria-byzantine/30 shadow-museum relative z-10">
           <!-- The Leaflet Map Viewport -->
           <div id="porec-map" class="w-full h-full"></div>
           
@@ -1037,7 +1037,7 @@
         // Clean Vertical Sidebar Card
         const card = document.createElement('div');
         card.id = `poi-card-${poi.id}`;
-        card.className = `w-full flex-shrink-0 p-3.5 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-center box-border ${
+        card.className = `w-full flex-shrink-0 p-4 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-start box-border ${
           poi.id === activePOI.id 
             ? 'bg-white border-istria-byzantine shadow-md ring-1 ring-istria-gold' 
             : 'bg-white/80 border-istria-stone hover:border-istria-byzantine/50 hover:bg-white'
@@ -1046,20 +1046,20 @@
         card.onclick = () => selectPOI(poi.id, true);
 
         card.innerHTML = `
-          <div class="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 relative border border-istria-byzantine/30 shadow-sm">
+          <div class="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 relative border border-istria-byzantine/30 shadow-sm mt-0.5">
             <img src="${poi.image}" alt="${poi.title}" class="w-full h-full object-cover" />
             <span class="absolute top-1 left-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] text-white shadow-md" style="background-color: ${poi.color};">
               <i class="fa-solid ${poi.iconClass}"></i>
             </span>
           </div>
           <div class="flex-grow min-w-0">
-            <div class="flex items-center justify-between">
+            <div class="flex items-center justify-between gap-1">
               <span class="text-[9px] font-cinzel uppercase px-1.5 py-0.2 rounded bg-istria-dark/5 text-istria-terracotta font-bold">${poi.eraLabel}</span>
             </div>
-            <h4 class="font-serif text-sm font-bold text-istria-dark truncate mt-0.5">${poi.title}</h4>
-            <p class="text-xs text-istria-slate font-serif line-clamp-1 mt-0.5">${poi.summary}</p>
+            <h4 class="font-serif text-sm font-bold text-istria-dark leading-snug mt-1 break-words">${poi.title}</h4>
+            <p class="text-xs text-istria-slate font-serif leading-relaxed mt-1 break-words">${poi.summary}</p>
           </div>
-          <i class="fa-solid fa-chevron-right text-xs text-istria-slate/40 flex-shrink-0"></i>
+          <i class="fa-solid fa-chevron-right text-xs text-istria-slate/40 flex-shrink-0 mt-2"></i>
         `;
 
         poiContainer.appendChild(card);
@@ -1079,11 +1079,11 @@
 
       // Update Sidebar Cards
       document.querySelectorAll('[id^="poi-card-"]').forEach(el => {
-        el.className = 'w-full flex-shrink-0 p-3.5 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-center box-border bg-white/80 border-istria-stone hover:border-istria-byzantine/50 hover:bg-white';
+        el.className = 'w-full flex-shrink-0 p-4 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-start box-border bg-white/80 border-istria-stone hover:border-istria-byzantine/50 hover:bg-white';
       });
       const activeCard = document.getElementById(`poi-card-${id}`);
       if (activeCard) {
-        activeCard.className = 'w-full flex-shrink-0 p-3.5 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-center box-border bg-white border-istria-byzantine shadow-md ring-1 ring-istria-gold';
+        activeCard.className = 'w-full flex-shrink-0 p-4 rounded-2xl border transition-all cursor-pointer flex gap-3.5 items-start box-border bg-white border-istria-byzantine shadow-md ring-1 ring-istria-gold';
         activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
 
