@@ -1,0 +1,1294 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>波雷奇 Poreč (Parenzo) 城市走讀誌 ｜ 極東義大利・數位策展深旅</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Cormorant+Garamond:ital,wght@0,400;0,600;0,700;1,400&family=Noto+Serif+TC:wght@300;400;600;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Leaflet CSS & JS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            istria: {
+              stone: '#F5F1E8',
+              paper: '#FAF7F0',
+              terracotta: '#A84232',
+              venetian: '#8E2825',
+              byzantine: '#C99E38',
+              gold: '#D4AF37',
+              adriatic: '#0B3B5B',
+              sea: '#1C6E8C',
+              dark: '#14181B',
+              charcoal: '#22272B',
+              slate: '#5A6570'
+            }
+          },
+          fontFamily: {
+            cinzel: ['Cinzel', 'serif'],
+            cormorant: ['Cormorant Garamond', 'serif'],
+            serif: ['Noto Serif TC', 'Cormorant Garamond', 'serif'],
+            sans: ['Plus Jakarta Sans', 'sans-serif']
+          },
+          boxShadow: {
+            'glow-gold': '0 0 25px rgba(212, 175, 55, 0.25)',
+            'paper-card': '0 12px 35px -10px rgba(20, 24, 27, 0.1), 0 4px 12px rgba(0,0,0,0.04)',
+            'museum': '0 20px 50px rgba(11, 59, 91, 0.12)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #FAF7F0; }
+    ::-webkit-scrollbar-thumb { background: #C99E38; border-radius: 3px; }
+
+    /* Parchment & Old Map subtle texture */
+    .bg-parchment {
+      background-color: #FAF7F0;
+      background-image: radial-gradient(#d3cabb 0.75px, transparent 0.75px), radial-gradient(#d3cabb 0.75px, #FAF7F0 0.75px);
+      background-size: 30px 30px;
+      background-position: 0 0, 15px 15px;
+    }
+
+    .bg-curator-dark {
+      background-color: #12161A;
+      background-image: radial-gradient(rgba(201, 158, 56, 0.08) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    /* Custom Map Marker styles */
+    .custom-curator-marker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+      border: 2px solid #FFFFFF;
+      transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      cursor: pointer;
+    }
+    .custom-curator-marker:hover, .custom-curator-marker.active-marker {
+      transform: scale(1.3);
+      z-index: 1000 !important;
+      border-color: #D4AF37;
+      box-shadow: 0 0 20px rgba(212, 175, 55, 0.8);
+    }
+
+    /* Roman numeral bullets */
+    .roman-list { counter-reset: roman-num; }
+    .roman-list li { counter-increment: roman-num; position: relative; }
+    .roman-list li::before {
+      content: counter(roman-num, upper-roman) ".";
+      position: absolute;
+      left: -2rem;
+      font-family: 'Cinzel', serif;
+      font-weight: 700;
+      color: #A84232;
+    }
+
+    /* Mosaic shimmer effect */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .gold-shimmer {
+      background: linear-gradient(90deg, #C99E38 0%, #FFF4D0 50%, #C99E38 100%);
+      background-size: 200% 100%;
+      animation: shimmer 4s infinite linear;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .glass-effect {
+      background: rgba(250, 247, 240, 0.88);
+      backdrop-filter: blur(12px);
+      border: 1px solid rgba(201, 158, 56, 0.25);
+    }
+  </style>
+</head>
+<body class="bg-parchment text-istria-dark font-sans antialiased selection:bg-istria-byzantine selection:text-white">
+
+  <!-- ================= TOP CURATOR NAV BAR ================= -->
+  <header class="fixed top-0 left-0 right-0 z-50 glass-effect border-b border-istria-byzantine/20 transition-all duration-300">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 py-3 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-full bg-istria-dark text-istria-gold flex items-center justify-center font-cinzel text-xl font-bold shadow-md border border-istria-gold/40">
+          P
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <span class="font-cinzel tracking-wider text-xs uppercase px-2 py-0.5 rounded bg-istria-terracotta/10 text-istria-terracotta font-bold border border-istria-terracotta/20">極東義大利・數位策展深旅</span>
+            <span class="text-xs text-istria-slate font-cormorant italic hidden sm:inline">Istria Littoral Edition</span>
+          </div>
+          <h1 class="font-serif font-black text-lg sm:text-xl text-istria-dark tracking-tight leading-none mt-0.5">
+            波雷奇 <span class="font-cinzel text-sm font-semibold text-istria-slate">POREČ (PARENZO)</span>
+          </h1>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs & Audio toggle -->
+      <div class="flex items-center space-x-2 sm:space-x-4">
+        <nav class="hidden md:flex items-center space-x-1 text-sm font-medium">
+          <a href="#curator-thesis" class="px-3 py-1.5 rounded-full text-istria-charcoal hover:text-istria-venetian hover:bg-istria-stone/80 transition-all">策展觀點</a>
+          <a href="#interactive-atlas" class="px-3 py-1.5 rounded-full text-istria-charcoal hover:text-istria-venetian hover:bg-istria-stone/80 transition-all">走讀地圖誌</a>
+          <a href="#deep-reading" class="px-3 py-1.5 rounded-full text-istria-charcoal hover:text-istria-venetian hover:bg-istria-stone/80 transition-all">四重疊層</a>
+          <a href="#visual-gallery" class="px-3 py-1.5 rounded-full text-istria-charcoal hover:text-istria-venetian hover:bg-istria-stone/80 transition-all">視覺典藏</a>
+          <a href="#field-notes" class="px-3 py-1.5 rounded-full text-istria-charcoal hover:text-istria-venetian hover:bg-istria-stone/80 transition-all">隨筆與微醺</a>
+        </nav>
+
+        <!-- Ambient Sound Synthesizer (Adriatic Sea Breeze & Ancient Chimes) -->
+        <button id="ambient-audio-btn" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold bg-istria-dark text-istria-gold hover:bg-istria-charcoal border border-istria-gold/30 shadow-sm transition-all" title="點擊切換亞得里亞海潮汐與古鐘情境音（Web Audio 合成技術）">
+          <i data-lucide="waves" class="w-4 h-4"></i>
+          <span id="audio-btn-label">海潮與鐘鳴：開</span>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= HERO SECTION (EDITORIAL COVER STYLE) ================= -->
+  <section class="relative pt-28 pb-16 md:pt-36 md:pb-24 overflow-hidden border-b border-istria-byzantine/20">
+    <div class="absolute inset-0 pointer-events-none opacity-10 bg-[radial-gradient(#8E2825_1px,transparent_1px)] [background-size:16px_16px]"></div>
+    
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+        
+        <!-- Left: Editorial Text -->
+        <div class="lg:col-span-7 space-y-6">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-istria-byzantine/15 border border-istria-byzantine/40 text-istria-charcoal text-xs font-semibold">
+            <span class="w-2 h-2 rounded-full bg-istria-byzantine animate-ping"></span>
+            UNESCO 1997 世界文化遺產 ｜ 伊斯特利亞半島西岸
+          </div>
+
+          <h2 class="font-serif text-4xl sm:text-5xl lg:text-6xl font-black text-istria-dark tracking-tight leading-[1.15]">
+            以<span class="text-istria-terracotta">羅馬的骨骼</span>，<br>
+            裹著<span class="gold-shimmer">拜占庭的金色</span>，<br>
+            披上<span class="text-istria-venetian">威尼斯的蕾絲</span>。
+          </h2>
+
+          <p class="font-cormorant text-xl sm:text-2xl text-istria-slate italic leading-relaxed border-l-2 border-istria-byzantine pl-4">
+            “A Roman grid anchored in the turquoise Adriatic, where 6th-century golden tesserae whisper secrets across Venetian gothic balconies.”
+          </p>
+
+          <p class="text-base sm:text-lg text-istria-charcoal/90 leading-relaxed font-serif">
+            走進波雷奇（義大利語：<strong>Parenzo</strong>），你踩踏的是兩千年未曾偏移的古羅馬主幹道石灰岩，仰頭遇見的是世界上最純粹的早期拜占庭金底鑲嵌畫，穿梭在小巷時，迎面而來的是威尼斯總督宮式的石雕花窗與海風。
+          </p>
+
+          <!-- Quick Stat Badges -->
+          <div class="grid grid-cols-3 gap-3 pt-3">
+            <div class="bg-white/80 border border-istria-byzantine/20 rounded-xl p-3 shadow-sm text-center">
+              <span class="block font-cinzel text-2xl font-bold text-istria-terracotta">2000+</span>
+              <span class="text-xs text-istria-slate">年羅馬十字街區</span>
+            </div>
+            <div class="bg-white/80 border border-istria-byzantine/20 rounded-xl p-3 shadow-sm text-center">
+              <span class="block font-cinzel text-2xl font-bold text-istria-byzantine">VI 世紀</span>
+              <span class="text-xs text-istria-slate">拜占庭黃金聖殿</span>
+            </div>
+            <div class="bg-white/80 border border-istria-byzantine/20 rounded-xl p-3 shadow-sm text-center">
+              <span class="block font-cinzel text-2xl font-bold text-istria-venetian">500 年</span>
+              <span class="text-xs text-istria-slate">威尼斯共和前哨</span>
+            </div>
+          </div>
+
+          <div class="flex flex-wrap gap-3 pt-2">
+            <a href="#interactive-atlas" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-istria-venetian text-white font-medium hover:bg-istria-terracotta shadow-museum transition-all">
+              <i data-lucide="map-pin" class="w-4 h-4"></i>
+              進入互動走讀地圖誌
+            </a>
+            <a href="#deep-reading" class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-white text-istria-dark border border-istria-charcoal/20 font-medium hover:bg-istria-stone transition-all">
+              <i data-lucide="book-open" class="w-4 h-4"></i>
+              解碼四重歷史疊層
+            </a>
+          </div>
+        </div>
+
+        <!-- Right: Curated Photo Card with Hover Layers -->
+        <div class="lg:col-span-5 relative">
+          <div class="relative mx-auto max-w-md lg:max-w-none">
+            <!-- Decorative Offset Frame -->
+            <div class="absolute -inset-2 rounded-2xl bg-gradient-to-tr from-istria-terracotta/20 via-istria-gold/30 to-istria-adriatic/20 filter blur-sm"></div>
+            
+            <div class="relative bg-white rounded-2xl p-3 shadow-museum border border-istria-byzantine/30">
+              <div class="relative h-96 sm:h-[420px] rounded-xl overflow-hidden group">
+                <img id="hero-main-img" src="https://images.unsplash.com/photo-1598971861713-54ad16a7e72e?q=80&w=1200&auto=format&fit=crop" alt="Poreč Old Town aerial view" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
+                
+                <div class="absolute inset-0 bg-gradient-to-t from-istria-dark/90 via-istria-dark/30 to-transparent"></div>
+
+                <div class="absolute bottom-0 left-0 right-0 p-5 text-white">
+                  <div class="flex items-center justify-between text-xs font-cinzel text-istria-gold mb-1">
+                    <span>ARCHIVAL CAPTURE</span>
+                    <span>LAT 45.2268° N, 13.5938° E</span>
+                  </div>
+                  <h3 class="font-serif text-xl font-bold">狹長海角的衛城幾何</h3>
+                  <p class="text-xs text-stone-200 mt-1 line-clamp-2">波雷奇半島探入亞得里亞海，羅馬測量官奠定的長方形正交網格清晰可辨。</p>
+                </div>
+              </div>
+
+              <!-- Mini gallery thumbnail strip -->
+              <div class="grid grid-cols-3 gap-2 mt-3">
+                <button onclick="changeHeroImage('https://images.unsplash.com/photo-1598971861713-54ad16a7e72e?q=80&w=1200&auto=format&fit=crop', '狹長海角的衛城幾何', '波雷奇半島探入亞得里亞海，羅馬測量官奠定的長方形正交網格清晰可辨。')" class="h-16 rounded-lg overflow-hidden border-2 border-istria-gold focus:outline-none">
+                  <img src="https://images.unsplash.com/photo-1598971861713-54ad16a7e72e?q=80&w=300&auto=format&fit=crop" class="w-full h-full object-cover" alt="Peninsula view">
+                </button>
+                <button onclick="changeHeroImage('https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Porec_Euphrasius-Basilika_Apsis_2008.jpg/1280px-Porec_Euphrasius-Basilika_Apsis_2008.jpg', '尤弗拉西烏斯聖殿・黃金鑲嵌畫', '6 世紀拜占庭早期金底馬賽克，母貝與金箔交織的西方早期基督教顛峰之作。')" class="h-16 rounded-lg overflow-hidden border border-istria-byzantine/30 hover:border-istria-gold focus:outline-none">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Porec_Euphrasius-Basilika_Apsis_2008.jpg/300px-Porec_Euphrasius-Basilika_Apsis_2008.jpg" class="w-full h-full object-cover" alt="Euphrasian Mosaics">
+                </button>
+                <button onclick="changeHeroImage('https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Pore%C4%8D_-_Gothic_House.jpg/1280px-Pore%C4%8D_-_Gothic_House.jpg', '威尼斯花飾哥德式・石雕三聯窗', '1460 年建造的 Gothic House，見證 Serenissima（威尼斯最寧靜共和國）五百年工藝。')" class="h-16 rounded-lg overflow-hidden border border-istria-byzantine/30 hover:border-istria-gold focus:outline-none">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Pore%C4%8D_-_Gothic_House.jpg/300px-Pore%C4%8D_-_Gothic_House.jpg" class="w-full h-full object-cover" alt="Gothic House">
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CURATOR'S THESIS: 有何好走？有何好讀？ ================= -->
+  <section id="curator-thesis" class="py-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-3xl mx-auto mb-16">
+      <span class="font-cinzel text-xs font-bold text-istria-terracotta tracking-widest uppercase">Curatorial Perspective</span>
+      <h2 class="font-serif text-3xl sm:text-4xl font-black text-istria-dark mt-2">走讀雙重視角：雙腿的感知，雙眼的閱讀</h2>
+      <div class="w-16 h-0.5 bg-istria-byzantine mx-auto my-4"></div>
+      <p class="text-istria-slate font-serif text-base">不同於一般的走馬看花，波雷奇的精緻尺度讓每一步都與歷史地質緊密咬合。</p>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+      <!-- Card A: 有何好走 -->
+      <div class="bg-white rounded-2xl p-8 border border-istria-byzantine/20 shadow-paper-card relative overflow-hidden group hover:border-istria-byzantine transition-all">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-istria-terracotta/5 rounded-bl-full pointer-events-none"></div>
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-12 h-12 rounded-xl bg-istria-terracotta/10 text-istria-terracotta flex items-center justify-center font-bold">
+            <i data-lucide="footprints" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <span class="font-cinzel text-xs font-bold text-istria-terracotta tracking-wider">KINETIC EXPERIENCE</span>
+            <h3 class="font-serif text-2xl font-bold text-istria-dark">有何【好走】？</h3>
+          </div>
+        </div>
+
+        <ul class="space-y-4 font-serif text-sm sm:text-base text-istria-charcoal">
+          <li class="flex items-start gap-3">
+            <span class="w-6 h-6 rounded-full bg-istria-stone flex items-center justify-center font-cinzel text-xs font-bold text-istria-terracotta flex-shrink-0 mt-0.5">I</span>
+            <div>
+              <strong class="text-istria-dark block">極致緊湊的親密人行尺度</strong>
+              從東端城門走到西端海角僅約 600 公尺，老城完全杜絕車輛喧擾，15 分鐘可直貫全城，但每一轉角都是兩千年的歷史切片。
+            </div>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="w-6 h-6 rounded-full bg-istria-stone flex items-center justify-center font-cinzel text-xs font-bold text-istria-terracotta flex-shrink-0 mt-0.5">II</span>
+            <div>
+              <strong class="text-istria-dark block">觸感溫潤的伊斯特利亞石灰岩</strong>
+              腳下踩著光滑如玉的 Istrian stone，經兩千年海風與步履琢磨，雨後微光反照古城燈影，觸感極富詩意。
+            </div>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="w-6 h-6 rounded-full bg-istria-stone flex items-center justify-center font-cinzel text-xs font-bold text-istria-terracotta flex-shrink-0 mt-0.5">III</span>
+            <div>
+              <strong class="text-istria-dark block">三面環海的 Lungomare 海角迴廊</strong>
+              沿著半島防禦堤岸漫步，左倚石垣塔樓，右臨蔚藍亞得里亞海與聖尼古拉島，黃昏時分海風穿街入巷，是最放鬆的步行節奏。
+            </div>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Card B: 有何好讀 -->
+      <div class="bg-white rounded-2xl p-8 border border-istria-byzantine/20 shadow-paper-card relative overflow-hidden group hover:border-istria-byzantine transition-all">
+        <div class="absolute top-0 right-0 w-32 h-32 bg-istria-byzantine/10 rounded-bl-full pointer-events-none"></div>
+        <div class="flex items-center gap-3 mb-6">
+          <div class="w-12 h-12 rounded-xl bg-istria-byzantine/20 text-istria-byzantine flex items-center justify-center font-bold">
+            <i data-lucide="book-open" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <span class="font-cinzel text-xs font-bold text-istria-byzantine tracking-wider">SEMIOTIC DECODING</span>
+            <h3 class="font-serif text-2xl font-bold text-istria-dark">有何【好讀】？</h3>
+          </div>
+        </div>
+
+        <ul class="space-y-4 font-serif text-sm sm:text-base text-istria-charcoal">
+          <li class="flex items-start gap-3">
+            <span class="w-6 h-6 rounded-full bg-istria-stone flex items-center justify-center font-cinzel text-xs font-bold text-istria-byzantine flex-shrink-0 mt-0.5">I</span>
+            <div>
+              <strong class="text-istria-dark block">讀拜占庭早期鑲嵌密碼</strong>
+              尤弗拉西烏斯聖殿內，看 6 世紀金箔與母貝鑲嵌的聖母正中坐像，解讀主教 Euphrasius 手持教堂模型的奉獻姿態。
+            </div>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="w-6 h-6 rounded-full bg-istria-stone flex items-center justify-center font-cinzel text-xs font-bold text-istria-byzantine flex-shrink-0 mt-0.5">II</span>
+            <div>
+              <strong class="text-istria-dark block">讀威尼斯石獅與花飾哥德</strong>
+              細辨城牆石獅爪下的書本「開書＝和平、閉書＝備戰」；讀 Decumanus 街上哥德式三聯窗（Trifora）如何移植威尼斯總督宮工法。
+            </div>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="w-6 h-6 rounded-full bg-istria-stone flex items-center justify-center font-cinzel text-xs font-bold text-istria-byzantine flex-shrink-0 mt-0.5">III</span>
+            <div>
+              <strong class="text-istria-dark block">讀地緣多重語言與生活層理</strong>
+              看雙語街牌（克羅埃西亞語/義大利語），在羅馬海王星神廟遺構旁的小酒館喝一杯伊斯特利亞 Malvazija，感受文明融合的餘韻。
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= INTERACTIVE CURATORIAL ATLAS (THE CORE MAP INTERFACE) ================= -->
+  <section id="interactive-atlas" class="py-16 bg-curator-dark text-white border-y border-istria-gold/20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      
+      <!-- Section Header with Layer Filters -->
+      <div class="flex flex-col lg:flex-row lg:items-end justify-between mb-8 gap-6">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-istria-gold/10 border border-istria-gold/30 text-istria-gold text-xs font-cinzel font-bold">
+            <i data-lucide="compass" class="w-3.5 h-3.5"></i>
+            INTERACTIVE CURATION ATLAS
+          </div>
+          <h2 class="font-serif text-3xl sm:text-4xl font-black mt-2">波雷奇走讀・互動地圖誌</h2>
+          <p class="text-stone-400 font-serif text-sm mt-1">點擊左側走讀節點或地圖圖標，探索深度策展檔案與空間雙向聯動。</p>
+        </div>
+
+        <!-- Filter Buttons by Historical Eras -->
+        <div class="flex flex-wrap gap-2">
+          <button onclick="filterMarkers('all')" class="filter-btn active-filter px-3.5 py-1.5 rounded-full text-xs font-medium bg-istria-gold text-istria-dark border border-istria-gold transition-all" data-era="all">
+            全部走讀點 (10)
+          </button>
+          <button onclick="filterMarkers('roman')" class="filter-btn px-3.5 py-1.5 rounded-full text-xs font-medium bg-stone-800 text-stone-300 border border-stone-700 hover:border-istria-terracotta hover:text-white transition-all" data-era="roman">
+            🏛️ 羅馬帝國格局
+          </button>
+          <button onclick="filterMarkers('byzantine')" class="filter-btn px-3.5 py-1.5 rounded-full text-xs font-medium bg-stone-800 text-stone-300 border border-stone-700 hover:border-istria-gold hover:text-white transition-all" data-era="byzantine">
+            ✨ 拜占庭黃金期
+          </button>
+          <button onclick="filterMarkers('venetian')" class="filter-btn px-3.5 py-1.5 rounded-full text-xs font-medium bg-stone-800 text-stone-300 border border-stone-700 hover:border-istria-venetian hover:text-white transition-all" data-era="venetian">
+            🦁 威尼斯共和遺緒
+          </button>
+          <button onclick="filterMarkers('life')" class="filter-btn px-3.5 py-1.5 rounded-full text-xs font-medium bg-stone-800 text-stone-300 border border-stone-700 hover:border-istria-sea hover:text-white transition-all" data-era="life">
+            🌊 亞得里亞海角生活
+          </button>
+        </div>
+      </div>
+
+      <!-- Main Map Grid Container -->
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        
+        <!-- Left Column: Scrollable Curated POI Cards (5 cols) -->
+        <div class="lg:col-span-5 h-[580px] overflow-y-auto pr-2 space-y-3" id="poi-card-container">
+          <!-- POI cards will be rendered dynamically by JavaScript -->
+        </div>
+
+        <!-- Right Column: Interactive Leaflet Map + Active Focus Inspector (7 cols) -->
+        <div class="lg:col-span-7 flex flex-col h-[580px] rounded-2xl overflow-hidden border border-istria-gold/30 shadow-2xl relative">
+          <!-- The Map Viewport -->
+          <div id="porec-map" class="w-full h-full z-10"></div>
+          
+          <!-- Map Overlay Floating Guide -->
+          <div class="absolute top-4 right-4 z-20 bg-istria-dark/85 backdrop-blur-md px-3.5 py-2.5 rounded-xl border border-istria-gold/30 text-xs text-stone-300 shadow-lg pointer-events-none hidden sm:block">
+            <div class="flex items-center gap-2 font-cinzel text-istria-gold font-bold mb-1">
+              <i data-lucide="map" class="w-3.5 h-3.5"></i>
+              CURATED ROUTE 600m
+            </div>
+            <div>金黃虛線：東西向羅馬主軸 Decumanus</div>
+          </div>
+
+          <!-- Bottom Floating Quick Info bar -->
+          <div id="map-active-badge" class="absolute bottom-4 left-4 right-4 z-20 bg-istria-dark/95 backdrop-blur-md p-4 rounded-xl border border-istria-gold/40 shadow-2xl transition-all duration-300">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <span id="badge-icon" class="w-8 h-8 rounded-lg bg-istria-gold text-istria-dark flex items-center justify-center font-bold text-sm">1</span>
+                <div>
+                  <h4 id="badge-title" class="font-serif text-base font-bold text-white leading-tight">五角防禦塔 (Peterokutna kula)</h4>
+                  <p id="badge-subtitle" class="text-xs text-istria-gold/80 font-cinzel">Venetian Bastion • AD 1447</p>
+                </div>
+              </div>
+              <button onclick="openModalForActive()" class="px-3 py-1.5 rounded-lg bg-istria-gold/20 hover:bg-istria-gold hover:text-istria-dark text-istria-gold text-xs font-semibold border border-istria-gold/40 transition-all flex items-center gap-1.5">
+                <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                <span>深度解析</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= DEEP READING: FOUR HISTORICAL STRATA ================= -->
+  <section id="deep-reading" class="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="text-center max-w-3xl mx-auto mb-16">
+      <span class="font-cinzel text-xs font-bold text-istria-venetian tracking-widest uppercase">Deep Cultural Semiotics</span>
+      <h2 class="font-serif text-3xl sm:text-5xl font-black text-istria-dark mt-2">四重歷史疊層的符號解讀</h2>
+      <div class="w-16 h-0.5 bg-istria-byzantine mx-auto my-4"></div>
+      <p class="text-istria-slate font-serif text-base sm:text-lg">波雷奇如同地質沉積岩，不同時代的統治者未曾抹去前人，而是巧妙地在舊骨架上疊加新的藝術生命。</p>
+    </div>
+
+    <!-- 4 Detailed Strata Cards -->
+    <div class="space-y-16">
+
+      <!-- Strata 1: 拜占庭黃金與神聖空間 -->
+      <div class="bg-white rounded-3xl p-8 lg:p-12 border border-istria-byzantine/30 shadow-museum grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-5 order-2 lg:order-1 space-y-4">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-istria-byzantine/20 text-istria-charcoal text-xs font-cinzel font-bold">
+            STRATUM I • 6TH CENTURY BYZANTIUM
+          </div>
+          <h3 class="font-serif text-2xl sm:text-3xl font-black text-istria-dark">
+            尤弗拉西烏斯聖殿：<br><span class="gold-shimmer">亞得里亞海東岸的拉溫納</span>
+          </h3>
+          <p class="text-istria-charcoal font-serif text-sm sm:text-base leading-relaxed">
+            建於西元 6 世紀的主教 Euphrasius 任內，是世界上保存最完整的早期拜占庭大教堂建築群。這裡的黃金鑲嵌畫將**金箔夾在兩層玻璃之間**，並刻意以不同角度嵌入灰漿中，使得自然光線在不同時刻產生神聖的浮動微光。
+          </p>
+
+          <div class="bg-istria-stone/60 p-4 rounded-xl border-l-4 border-istria-byzantine font-serif text-xs sm:text-sm text-istria-slate space-y-2">
+            <p><strong>關鍵看點解碼：</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+              <li><strong>罕見聖母像</strong>：半穹頂中央為聖母懷抱耶穌，而非當時常見的基督全能者（Pantocrator）。</li>
+              <li><strong>主教獻祭模型</strong>：左側可見 Euphrasius 本人手捧教堂建築模型。</li>
+              <li><strong>4世紀地磚馬賽克</strong>：大教堂地板下方完整保存了基督教合法化初期的幾何與魚形秘密符號地磚。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="lg:col-span-7 order-1 lg:order-2">
+          <div class="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-istria-byzantine/40 group">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Porec_Euphrasius-Basilika_Apsis_2008.jpg/1280px-Porec_Euphrasius-Basilika_Apsis_2008.jpg" alt="Euphrasian apse mosaic" class="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-700" />
+            <div class="absolute bottom-3 right-3 bg-istria-dark/80 backdrop-blur-md px-3 py-1.5 rounded-lg text-white text-xs font-cinzel">
+              UNESCO World Heritage #809
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Strata 2: 威尼斯共和國的石刻密碼 -->
+      <div class="bg-white rounded-3xl p-8 lg:p-12 border border-istria-venetian/20 shadow-museum grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-7">
+          <div class="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-istria-venetian/30 group">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Pore%C4%8D_-_Gothic_House.jpg/1280px-Pore%C4%8D_-_Gothic_House.jpg" alt="Gothic House Porec" class="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-700" />
+            <div class="absolute bottom-3 left-3 bg-istria-dark/80 backdrop-blur-md px-3 py-1.5 rounded-lg text-istria-gold text-xs font-cinzel">
+              Venetian Floral Gothic • 1460
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-5 space-y-4">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-istria-venetian/10 text-istria-venetian text-xs font-cinzel font-bold">
+            STRATUM II • SERENISSIMA (1267–1797)
+          </div>
+          <h3 class="font-serif text-2xl sm:text-3xl font-black text-istria-dark">
+            威尼斯五百年：<br><span class="text-istria-venetian">石匠的蕾絲與聖馬可之獅</span>
+          </h3>
+          <p class="text-istria-charcoal font-serif text-sm sm:text-base leading-relaxed">
+            波雷奇是伊斯特利亞第一個主動宣誓效忠威尼斯共和國的城鎮。威尼斯將其作為亞得里亞海東航道的前哨港與木材供應地。
+          </p>
+
+          <div class="bg-istria-stone/60 p-4 rounded-xl border-l-4 border-istria-venetian font-serif text-xs sm:text-sm text-istria-slate space-y-2">
+            <p><strong>石刻政治學解密：</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+              <li><strong>花飾哥德窗（Trifora）</strong>：Decumanus 街上的 Gothic House 與 Palazzo Zuccato 完美重現大運河畔貴族宅邸的石雕精髓。</li>
+              <li><strong>聖馬可之獅的翻書密碼</strong>：獅爪下刻著「PAX TIBI MARCE...（願你平安，馬可）」，若書本敞開表示在和平時期建造，若合上或持劍則代表戒備戰備。</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Strata 3: 羅馬殖民城市的骨骼 -->
+      <div class="bg-white rounded-3xl p-8 lg:p-12 border border-istria-terracotta/20 shadow-museum grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-5 order-2 lg:order-1 space-y-4">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-istria-terracotta/10 text-istria-terracotta text-xs font-cinzel font-bold">
+            STRATUM III • COLONIA IULIA PARENTIUM
+          </div>
+          <h3 class="font-serif text-2xl sm:text-3xl font-black text-istria-dark">
+            羅馬正交網格：<br><span class="text-istria-terracotta">長存兩千年的軍團棋盤</span>
+          </h3>
+          <p class="text-istria-charcoal font-serif text-sm sm:text-base leading-relaxed">
+            西元前 1 世紀，羅馬皇帝奧古斯都將此地定為羅馬殖民地。軍團測量員以最精準的羅馬十字大道（東西 Decumanus Maximus 與南北 Cardo Maximus）劃分出標準街廓（insulae），即便歷經拜占庭、威尼斯與奧匈帝國，街廓結構從未消失。
+          </p>
+
+          <div class="bg-istria-stone/60 p-4 rounded-xl border-l-4 border-istria-terracotta font-serif text-xs sm:text-sm text-istria-slate space-y-2">
+            <p><strong>走讀空間彩蛋：</strong></p>
+            <ul class="list-disc list-inside space-y-1">
+              <li><strong>馬拉福廣場（Trg Marafor）</strong>：即羅馬論壇（Forum）古址，地底下仍埋藏著海王星神廟（Temple of Neptune）與大神廟的柱座。</li>
+              <li><strong>古街命名</strong>：今日主要商業街仍直接命名為 <em>Decumanus</em>，全世界少有城市如此直白延續羅馬術語。</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="lg:col-span-7 order-1 lg:order-2">
+          <div class="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-istria-terracotta/30 group">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Porec_-_Marafor_Square.jpg/1280px-Porec_-_Marafor_Square.jpg" alt="Marafor Square Porec" class="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-700" />
+            <div class="absolute bottom-3 right-3 bg-istria-dark/80 backdrop-blur-md px-3 py-1.5 rounded-lg text-white text-xs font-cinzel">
+              Roman Forum • 1st Century BC
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Strata 4: 伊斯特利亞的微氣候與多語生活 -->
+      <div class="bg-white rounded-3xl p-8 lg:p-12 border border-istria-adriatic/20 shadow-museum grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+        <div class="lg:col-span-7">
+          <div class="relative rounded-2xl overflow-hidden shadow-2xl border-2 border-istria-adriatic/30 group">
+            <img src="https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=1200&auto=format&fit=crop" alt="Istrian Wine and Coast" class="w-full h-80 sm:h-96 object-cover group-hover:scale-105 transition-transform duration-700" />
+            <div class="absolute bottom-3 left-3 bg-istria-dark/80 backdrop-blur-md px-3 py-1.5 rounded-lg text-white text-xs font-cinzel">
+              Istrian Terroir & Malvazija
+            </div>
+          </div>
+        </div>
+
+        <div class="lg:col-span-5 space-y-4">
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-istria-adriatic/10 text-istria-adriatic text-xs font-cinzel font-bold">
+            STRATUM IV • MEDITERRANEAN VITA
+          </div>
+          <h3 class="font-serif text-2xl sm:text-3xl font-black text-istria-dark">
+            邊界上的微醺：<br><span class="text-istria-sea">雙語路標、松林海風與瑪爾維薩</span>
+          </h3>
+          <p class="text-istria-charcoal font-serif text-sm sm:text-base leading-relaxed">
+            波雷奇所在的一帶保留了濃厚的雙語傳統（克語與義語）。伊斯特利亞的紅土（Terra Rossa）與石灰岩，孕育出帶有礦石感與杏仁清香的 <strong>Malvazija Istarska</strong> 白葡萄酒，與亞得里亞海現撈海鮮搭配，是走讀最後撫慰身心的終極讀本。
+          </p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ================= VISUAL ARCHIVE / PHOTO GALLERY ================= -->
+  <section id="visual-gallery" class="py-20 bg-istria-stone/50 border-t border-istria-byzantine/20">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col sm:flex-row items-start sm:items-end justify-between mb-12 gap-4">
+        <div>
+          <span class="font-cinzel text-xs font-bold text-istria-terracotta tracking-widest uppercase">Visual Curatorial Archive</span>
+          <h2 class="font-serif text-3xl sm:text-4xl font-black text-istria-dark mt-1">波雷奇走讀・視覺典藏</h2>
+          <p class="text-istria-slate font-serif text-sm mt-1">點擊任意影像展開高解析度典藏檔案與深度策展註解。</p>
+        </div>
+        <div class="text-xs font-cinzel text-istria-slate">
+          6 CURATED PLATES • HIGHEST FIDELITY
+        </div>
+      </div>
+
+      <!-- Photo Grid -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6" id="photo-gallery-grid">
+        <!-- Photo Cards populated dynamically -->
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= CURATOR'S FIELD NOTES & ITINERARY ================= -->
+  <section id="field-notes" class="py-24 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="bg-gradient-to-br from-istria-dark via-istria-charcoal to-[#0d1720] text-white rounded-3xl p-8 sm:p-12 lg:p-16 shadow-2xl border border-istria-gold/30 relative overflow-hidden">
+      
+      <!-- Background emblem watermark -->
+      <div class="absolute right-0 bottom-0 translate-x-12 translate-y-12 opacity-5 pointer-events-none">
+        <svg width="400" height="400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+      </div>
+
+      <div class="relative z-10 max-w-4xl">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-istria-gold/20 text-istria-gold text-xs font-cinzel font-bold border border-istria-gold/30 mb-6">
+          <i data-lucide="compass" class="w-3.5 h-3.5"></i>
+          CURATOR'S RECOMMENDED ITINERARY
+        </div>
+
+        <h2 class="font-serif text-3xl sm:text-4xl font-black leading-tight">
+          波雷奇半日漫讀・策展動線建議
+        </h2>
+        <p class="text-stone-300 font-serif text-base mt-2 mb-8">
+          建議於午後 3:30 出發，順應亞得里亞海日照角度，將最神聖的馬賽克光暈與最浪漫的海角夕陽納入眼底。
+        </p>
+
+        <!-- Step-by-step Itinerary -->
+        <div class="space-y-6 border-l-2 border-istria-gold/30 pl-6 my-8">
+          
+          <div class="relative">
+            <span class="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-istria-gold border-2 border-istria-dark"></span>
+            <span class="text-xs font-cinzel text-istria-gold">15:30 ｜ 入城防禦序曲</span>
+            <h4 class="font-serif text-lg font-bold text-white mt-0.5">五角塔 (Pentagonal Tower) 集合入城</h4>
+            <p class="text-sm text-stone-300 font-serif mt-1">細讀 1447 年威尼斯防禦工事石獅，由此邁入羅馬主幹道 Decumanus。</p>
+          </div>
+
+          <div class="relative">
+            <span class="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-istria-byzantine border-2 border-istria-dark"></span>
+            <span class="text-xs font-cinzel text-istria-gold">16:00 ｜ 歷史高潮</span>
+            <h4 class="font-serif text-lg font-bold text-white mt-0.5">尤弗拉西烏斯大教堂群（UNESCO）</h4>
+            <p class="text-sm text-stone-300 font-serif mt-1">走過中庭柱廊、洗禮堂，登上鐘樓俯瞰紅瓦海港，最後在後殿半穹頂下沉浸於 6 世紀金底馬賽克光輝。</p>
+          </div>
+
+          <div class="relative">
+            <span class="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-istria-terracotta border-2 border-istria-dark"></span>
+            <span class="text-xs font-cinzel text-istria-gold">17:15 ｜ 古典廢墟與海風</span>
+            <h4 class="font-serif text-lg font-bold text-white mt-0.5">馬拉福廣場（Trg Marafor）與海王星神廟遺構</h4>
+            <p class="text-sm text-stone-300 font-serif mt-1">站在羅馬軍團殖民地的地基上，感受兩千年城鎮骨架的穩固。</p>
+          </div>
+
+          <div class="relative">
+            <span class="absolute -left-[31px] top-1 w-4 h-4 rounded-full bg-istria-sea border-2 border-istria-dark"></span>
+            <span class="text-xs font-cinzel text-istria-gold">18:00 ｜ 暮色漫步與微醺</span>
+            <h4 class="font-serif text-lg font-bold text-white mt-0.5">海角突堤步道 (Lungomare) ＆ 濱海品酒</h4>
+            <p class="text-sm text-stone-300 font-serif mt-1">繞行半島最西端，對望聖尼古拉島看夕陽沈入海平線，在濱海露天座點一杯冰鎮 Malvazija 與松露乳酪，結束一趟深邃的極東義大利走讀。</p>
+          </div>
+
+        </div>
+
+        <!-- Practical Curator Tips -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-stone-700">
+          <div class="bg-white/5 p-4 rounded-xl border border-white/10">
+            <div class="flex items-center gap-2 text-istria-gold font-bold text-sm font-cinzel mb-1">
+              <i data-lucide="sun" class="w-4 h-4"></i>
+              BEST PHOTOGRAPHY TIMING
+            </div>
+            <p class="text-xs text-stone-300 font-serif">大教堂鑲嵌畫在下午斜射光透過側窗時最為耀眼；海角防波堤夕陽最佳機位在半島最西端的 Obala Matka Laginje。</p>
+          </div>
+          <div class="bg-white/5 p-4 rounded-xl border border-white/10">
+            <div class="flex items-center gap-2 text-istria-gold font-bold text-sm font-cinzel mb-1">
+              <i data-lucide="wine" class="w-4 h-4"></i>
+              LOCAL TASTE PAIRING
+            </div>
+            <p class="text-xs text-stone-300 font-serif">推薦搭配：伊斯特利亞原生白酒 Malvazija Istarska + 亞得里亞海烤沙丁魚 (Srdela) 或生火腿 (Pršut)。</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="bg-istria-dark text-stone-400 py-12 border-t border-istria-gold/20 font-serif text-xs sm:text-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-6">
+      <div class="flex items-center space-x-3">
+        <div class="w-8 h-8 rounded-full bg-istria-gold text-istria-dark flex items-center justify-center font-cinzel font-bold">P</div>
+        <div>
+          <span class="text-white font-bold block">數位策展深旅 ｜ 極東義大利系列</span>
+          <span class="text-stone-500 font-cinzel text-xs">POREČ (PARENZO) CURATORIAL FOLIO</span>
+        </div>
+      </div>
+      <div class="text-center sm:text-right text-stone-500">
+        <p>A Curated Digital Exploration of Venetian & Byzantine Heritage in Istria</p>
+        <p class="text-xs text-stone-600 mt-1">© 2026 數位策展深旅. All curatorial content formulated for cultural travelers.</p>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= FULLSCREEN DETAIL MODAL ================= -->
+  <div id="detail-modal" class="fixed inset-0 z-[100] bg-black/80 backdrop-blur-md hidden flex items-center justify-center p-4 sm:p-6 transition-all duration-300">
+    <div class="bg-parchment rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-istria-byzantine/40 relative">
+      <button onclick="closeDetailModal()" class="absolute top-4 right-4 w-10 h-10 rounded-full bg-istria-dark/80 text-white flex items-center justify-center hover:bg-istria-venetian transition-all z-20">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="relative h-64 sm:h-80 w-full overflow-hidden rounded-t-3xl">
+        <img id="modal-img" src="" alt="" class="w-full h-full object-cover" />
+        <div class="absolute inset-0 bg-gradient-to-t from-istria-dark/90 via-istria-dark/30 to-transparent"></div>
+        <div class="absolute bottom-4 left-6 right-6 text-white">
+          <span id="modal-tag" class="text-xs font-cinzel text-istria-gold px-2.5 py-0.5 rounded bg-istria-gold/20 border border-istria-gold/40"></span>
+          <h3 id="modal-title" class="font-serif text-2xl sm:text-3xl font-black mt-1"></h3>
+          <p id="modal-subtitle" class="font-cinzel text-xs text-stone-300"></p>
+        </div>
+      </div>
+
+      <div class="p-6 sm:p-8 space-y-6">
+        <div>
+          <h4 class="font-cinzel text-xs font-bold text-istria-terracotta uppercase tracking-wider mb-2">CURATORIAL DEEP DIVE 策展深度解析</h4>
+          <p id="modal-desc" class="font-serif text-istria-charcoal text-base leading-relaxed"></p>
+        </div>
+
+        <div class="bg-white p-5 rounded-2xl border border-istria-byzantine/20 shadow-sm space-y-3">
+          <h5 class="font-cinzel text-xs font-bold text-istria-slate uppercase">走讀觀察點與細節解密</h5>
+          <ul id="modal-points" class="space-y-2 font-serif text-sm text-istria-charcoal"></ul>
+        </div>
+
+        <div class="flex items-center justify-between pt-2 border-t border-istria-byzantine/20">
+          <div class="flex items-center gap-2 text-xs text-istria-slate font-cinzel">
+            <i data-lucide="map-pin" class="w-4 h-4 text-istria-terracotta"></i>
+            <span id="modal-coords">45.2268° N, 13.5938° E</span>
+          </div>
+          <button onclick="focusOnMapAndClose()" class="px-4 py-2 rounded-xl bg-istria-dark text-istria-gold hover:bg-istria-charcoal text-xs font-bold font-cinzel transition-all flex items-center gap-1.5">
+            <i data-lucide="crosshair" class="w-4 h-4"></i>
+            在地圖上定位
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    // --- 1. CURATED DATASET (10 STOPS ACROSS POREČ) ---
+    const POI_DATA = [
+      {
+        id: 1,
+        title: "五角防禦塔 (Pentagonal Tower)",
+        originalTitle: "Peterokutna kula",
+        era: "venetian",
+        eraLabel: "威尼斯共和前哨",
+        iconText: "1",
+        color: "#8E2825",
+        coords: [45.2272, 13.5966],
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Porec_-_Pentagonal_Tower.jpg/1280px-Porec_-_Pentagonal_Tower.jpg",
+        thumb: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Porec_-_Pentagonal_Tower.jpg/300px-Porec_-_Pentagonal_Tower.jpg",
+        summary: "1447 年威尼斯總督下令建造的五角形堡壘，標誌著從陸地進入半島羅馬主軸的咽喉防禦。",
+        deepDive: "五角塔坐落在羅馬時代城門的基座上。塔身外牆嵌有精緻的威尼斯浮雕：中央是展翅的聖馬可石獅，下方銘刻著建造總督 Nicolo Lion 的盾徽與建造年份 1447。五角形的幾何設計能有效消除防守死角，抵禦奧斯曼土耳其時期的火砲威脅。",
+        points: [
+          "細看塔身上的聖馬可飛獅石雕銘牌，獅爪按著拉丁文和平銘文。",
+          "登上頂樓可將 Decumanus 街道的長軸全景一覽無遺。"
+        ]
+      },
+      {
+        id: 2,
+        title: "羅馬主幹道 (Decumanus Maximus)",
+        originalTitle: "Decumanus ulica",
+        era: "roman",
+        eraLabel: "羅馬帝國格局",
+        iconText: "2",
+        color: "#A84232",
+        coords: [45.2270, 13.5948],
+        image: "https://images.unsplash.com/photo-1568849676085-51415703900f?q=80&w=1200&auto=format&fit=crop",
+        thumb: "https://images.unsplash.com/photo-1568849676085-51415703900f?q=80&w=300&auto=format&fit=crop",
+        summary: "貫穿半島東西長達 600 公尺的羅馬主幹道，兩千年未曾變更其幾何中軸線。",
+        deepDive: "Decumanus 是古羅馬都市規劃的核心東西軸。街道兩旁的建築如同一座開放式建築博物館：底層是光滑如鏡的伊斯特利亞石灰岩，向上抬頭則依序可見羅馬式房舍、威尼斯哥德式窗飾、巴洛克宮殿門面與文藝復興石柱。",
+        points: [
+          "感受腳底踩踏的石灰岩（Istrian Stone），被兩千年海風與步履打磨得宛如大理石鏡面。",
+          "留意每條與 Decumanus 呈 90 度垂直相交的小巷，這就是標準的羅馬 Cardo 網格。"
+        ]
+      },
+      {
+        id: 3,
+        title: "哥德宅邸 (Gothic House, 1460)",
+        originalTitle: "Gotička kuća",
+        era: "venetian",
+        eraLabel: "威尼斯花飾哥德",
+        iconText: "3",
+        color: "#8E2825",
+        coords: [45.2270, 13.5939],
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Pore%C4%8D_-_Gothic_House.jpg/1280px-Pore%C4%8D_-_Gothic_House.jpg",
+        thumb: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Pore%C4%8D_-_Gothic_House.jpg/300px-Pore%C4%8D_-_Gothic_House.jpg",
+        summary: "波雷奇最具代表性的威尼斯花飾哥德式民居，擁有極度精巧的雕花三聯窗。",
+        deepDive: "建於 1460 年的富商宅邸。立面採用精細的伊斯特利亞白石雕鑿出三聯窗（Trifora），其尖券拱頂與四葉草窗花（Trefoil）與威尼斯大運河旁的黃金宮（Ca' d'Oro）共享相同的設計語言，展現當時波雷奇商人與威尼斯本土密不可分的品味同步率。",
+        points: [
+          "欣賞二樓的三聯尖拱窗與石刻蕾絲飾帶，這是典型的威尼斯花飾哥德工藝。",
+          "觀察窗台下方的承重托架（Corbels），刻有細緻的植物捲草紋。"
+        ]
+      },
+      {
+        id: 4,
+        title: "尤弗拉西烏斯聖殿 (Euphrasian Basilica)",
+        originalTitle: "Eufrazijeva bazilika",
+        era: "byzantine",
+        eraLabel: "拜占庭黃金聖殿 (UNESCO)",
+        iconText: "4",
+        color: "#D4AF37",
+        coords: [45.2287, 13.5938],
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Porec_Euphrasius-Basilika_Apsis_2008.jpg/1280px-Porec_Euphrasius-Basilika_Apsis_2008.jpg",
+        thumb: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Porec_Euphrasius-Basilika_Apsis_2008.jpg/300px-Porec_Euphrasius-Basilika_Apsis_2008.jpg",
+        summary: "西元 6 世紀早期基督教與拜占庭藝術頂峰，世界文化遺產，無與倫比的金底鑲嵌畫。",
+        deepDive: "建於 553 年，由主教 Euphrasius 主持。它是西方基督教藝術史上少數完整保留中庭（Atrium）、洗禮堂（Baptistery）、主教宮邸與大教堂本體的複合群。後殿半穹頂的鑲嵌畫結合了金箔、彩色玻璃、珍珠母貝與大理石，呈現聖母懷抱基督與聖徒環繞的莊嚴場景。",
+        points: [
+          "後殿半穹頂：尋找手抱教堂模型的主教 Euphrasius 本人肖像。",
+          "聖壇天頂 ciborium：1277 年加建的珍珠母貝鑲嵌大理石華蓋。",
+          "地面考古區：低頭凝視 4 世紀早期基督教密會所保留的魚紋與幾何鑲嵌地磚。"
+        ]
+      },
+      {
+        id: 5,
+        title: "聖殿柱廊中庭與鐘樓 (Atrium & Bell Tower)",
+        originalTitle: "Atrij i zvonik bazilike",
+        era: "byzantine",
+        eraLabel: "拜占庭空間建築",
+        iconText: "5",
+        color: "#D4AF37",
+        coords: [45.2286, 13.5933],
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Euphrasian_Basilica_Atrium.jpg/1280px-Euphrasian_Basilica_Atrium.jpg",
+        thumb: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Euphrasian_Basilica_Atrium.jpg/300px-Euphrasian_Basilica_Atrium.jpg",
+        summary: "四方拱廊中庭與 16 世紀鐘樓，攀頂可 360 度俯瞰半島紅瓦與亞得里亞海景。",
+        deepDive: "中庭四周由大理石柱廊環繞，柱頭上雕刻著精緻的拜占庭式老茛葉花紋與幾何基督符號。鐘樓建於 1522 年，登頂木梯後，整座半島的羅馬矩形輪廓與蔚藍海峽盡收眼底。",
+        points: [
+          "細看中庭大理石柱頭，每根雕花各異，帶著濃厚的拜占庭帝國皇家工坊風格。",
+          "鐘樓頂層是全城最佳鳥瞰拍攝點。"
+        ]
+      },
+      {
+        id: 6,
+        title: "祖卡托宮 (Palazzo Zuccato)",
+        originalTitle: "Palača Zuccato",
+        era: "venetian",
+        eraLabel: "威尼斯文藝復興宮邸",
+        iconText: "6",
+        color: "#8E2825",
+        coords: [45.2273, 13.5932],
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Euphrasian_Basilica_01.jpg/1280px-Euphrasian_Basilica_01.jpg",
+        thumb: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Euphrasian_Basilica_01.jpg/300px-Euphrasian_Basilica_01.jpg",
+        summary: "融合哥德晚期與早期文藝復興風格的貴族宮殿，見證威尼斯富庶家族的生活風貌。",
+        deepDive: "建於 16 世紀初，原為當地顯赫家族 Zuccato 的府邸。立面採用伊斯特利亞石料，二樓裝飾雙聯尖拱窗，三樓則轉變為平直優雅的文藝復興方窗，現為當代藝術展覽空間。",
+        points: [
+          "觀察建築如何巧妙結合防禦厚牆與優雅石雕開窗。",
+          "目前常態性展出伊斯特利亞當代藝術策展。"
+        ]
+      },
+      {
+        id: 7,
+        title: "馬拉福廣場與海王星神廟 (Trg Marafor)",
+        originalTitle: "Trg Marafor (Forum Romanum)",
+        era: "roman",
+        eraLabel: "羅馬帝國論壇",
+        iconText: "7",
+        color: "#A84232",
+        coords: [45.2267, 13.5910],
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Porec_-_Marafor_Square.jpg/1280px-Porec_-_Marafor_Square.jpg",
+        thumb: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Porec_-_Marafor_Square.jpg/300px-Porec_-_Marafor_Square.jpg",
+        summary: "古羅馬殖民地的論壇（Forum）核心，保存著西元 1 世紀海王星神廟的巨石殘基。",
+        deepDive: "Marafor 源自拉丁語 Forum 的音變。此處是古羅馬城市的生活與信仰心臟。西北側為海王星神廟（Tempio di Nettuno），曾是伊斯特利亞最大的羅馬神廟之一；走在廣場上，隨處可見被融入後世民宅牆體中的古羅馬石柱與柱礎。",
+        points: [
+          "在廣場角落辨識巨大的羅馬神廟石灰岩地基與破碎的科林斯柱頭。",
+          "廣場周邊的戶外咖啡座是體驗「廢墟融入日常生活」的絕佳落腳點。"
+        ]
+      },
+      {
+        id: 8,
+        title: "圓形防禦塔 (Round Tower)",
+        originalTitle: "Okrugla kula",
+        era: "venetian",
+        eraLabel: "威尼斯要塞堡壘",
+        iconText: "8",
+        color: "#8E2825",
+        coords: [45.2262, 13.5958],
+        image: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Porec_-_Round_Tower.jpg/1280px-Porec_-_Round_Tower.jpg",
+        thumb: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Porec_-_Round_Tower.jpg/300px-Porec_-_Round_Tower.jpg",
+        summary: "1474 年建於南側港口的圓形重型砲塔，現已改建為極具氛圍的頂樓露天吧台。",
+        deepDive: "由威尼斯總督 Pietro de Mula 於 1474 年主持興建，用以強化面對南側港灣的防禦。塔樓牆厚達數公尺，內部設有火藥庫與射擊孔。如今頂部化身為景觀露天吧，能一邊品飲當地葡萄酒一邊眺望遊艇碼頭。",
+        points: [
+          "外牆保留了 15 世紀石雕銘文與威尼斯海軍防禦工事的射擊坡度設計。",
+          "日落時分在此品嚐一杯伊斯特利亞 Teran 紅酒感受海風。"
+        ]
+      },
+      {
+        id: 9,
+        title: "海角突堤環海步道 (Lungomare Promenade)",
+        originalTitle: "Obala Matka Laginje",
+        era: "life",
+        eraLabel: "亞得里亞海角生活",
+        iconText: "9",
+        color: "#1C6E8C",
+        coords: [45.2275, 13.5898],
+        image: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=1200&auto=format&fit=crop",
+        thumb: "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?q=80&w=300&auto=format&fit=crop",
+        summary: "環繞半島最西端的海角石階，視野開闊直通亞得里亞海心，夕陽最佳觀測點。",
+        deepDive: "步道緊貼著古城外圍的礁石而築，沿途種植著地中海松樹。海潮輕拍石灰石堤岸，對岸是守護海港的聖尼古拉島。此處最能感受波雷奇作為「極東義大利前哨海港」的浩瀚地理感。",
+        points: [
+          "漫步於石灰岩防波堤，看海水在清澈碧綠與深邃湛藍之間變幻。",
+          "黃昏 18:00–19:30 是欣賞亞得里亞海夕陽的最高潮。"
+        ]
+      },
+      {
+        id: 10,
+        title: "老城石巷小酒館 (Istrian Konoba & Wine Spot)",
+        originalTitle: "Konoba & Terroir",
+        era: "life",
+        eraLabel: "在地風土與微醺",
+        iconText: "10",
+        color: "#1C6E8C",
+        coords: [45.2274, 13.5945],
+        image: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=1200&auto=format&fit=crop",
+        thumb: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=300&auto=format&fit=crop",
+        summary: "隱藏在石板巷弄中的傳統伊斯特利亞小館，品味 Malvazija 白酒與松露橄欖油。",
+        deepDive: "走讀的句點應當落在味蕾上。伊斯特利亞被譽為地中海頂級白松露與橄欖油之鄉。當地的原生葡萄品種 Malvazija Istarska 帶有優雅的槐花香與白桃風味，與當地手工麵疙瘩（Fuži）或現烤亞得里亞海產是天作之合。",
+        points: [
+          "必嚐：Malvazija Istarska 白葡萄酒（建議侍酒溫度 10-12°C）。",
+          "在地特色：搭配伊斯特利亞風乾火腿（Pršut）與綿羊乳酪。"
+        ]
+      }
+    ];
+
+    // --- 2. PHOTO GALLERY DATA ---
+    const GALLERY_ITEMS = [
+      {
+        title: "拜占庭金色蒼穹",
+        subtitle: "Euphrasian Basilica • 6th Century",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Porec_Euphrasius-Basilika_Apsis_2008.jpg/1280px-Porec_Euphrasius-Basilika_Apsis_2008.jpg",
+        desc: "後殿半穹頂的金色馬賽克，母貝與金箔的光學折射在早晨斜陽下尤為璀璨。"
+      },
+      {
+        title: "半島衛城的幾何輪廓",
+        subtitle: "Poreč Old Town Aerial",
+        img: "https://images.unsplash.com/photo-1598971861713-54ad16a7e72e?q=80&w=1200&auto=format&fit=crop",
+        desc: "探入亞得里亞海的狹長石灰岩半島，兩千年羅馬棋盤格局至今清晰延續。"
+      },
+      {
+        title: "花飾哥德窗的蕾絲雕痕",
+        subtitle: "Gothic House (1460)",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Pore%C4%8D_-_Gothic_House.jpg/1280px-Pore%C4%8D_-_Gothic_House.jpg",
+        desc: "威尼斯富商在伊斯特利亞留下的石雕三聯窗，四葉草窗花如同石頭織出的蕾絲。"
+      },
+      {
+        title: "羅馬論壇的千年石礎",
+        subtitle: "Trg Marafor Ruins",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/08/Porec_-_Marafor_Square.jpg/1280px-Porec_-_Marafor_Square.jpg",
+        desc: "西元 1 世紀海王星神廟的巨大基石，安靜地融入了中世紀與現代居民的起居生活。"
+      },
+      {
+        title: "大教堂中庭與柱廊花頭",
+        subtitle: "Euphrasian Atrium",
+        img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/Euphrasian_Basilica_Atrium.jpg/1280px-Euphrasian_Basilica_Atrium.jpg",
+        desc: "拜占庭老茛葉大理石柱雕，每根柱頭均承載著早期的基督教幾何符號。"
+      },
+      {
+        title: "伊斯特利亞的微風與風土",
+        subtitle: "Adriatic Terroir & Malvazija",
+        img: "https://images.unsplash.com/photo-1510812431401-41d2bd2722f3?q=80&w=1200&auto=format&fit=crop",
+        desc: "紅土與石灰石培育的 Malvazija 白酒，是亞得里亞海走讀不可或缺的味覺記憶。"
+      }
+    ];
+
+    // --- 3. STATE VARIABLES ---
+    let map;
+    let markersLayerGroup;
+    let activePOI = POI_DATA[0];
+    let currentFilter = 'all';
+
+    // --- 4. MAP INITIALIZATION ---
+    function initMap() {
+      // Center at Old Town Poreč
+      map = L.map('porec-map', {
+        center: [45.2272, 13.5938],
+        zoom: 16,
+        zoomControl: false
+      });
+
+      L.control.zoom({ position: 'topleft' }).addTo(map);
+
+      // Warm Parchment CartoDB Positron Tile layer
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; <a href="https://carto.com/">CARTO</a> &copy; OpenStreetMap',
+        maxZoom: 19,
+        subdomains: 'abcd'
+      }).addTo(map);
+
+      // Decumanus Walking Route Polyline (Golden Dashed Line)
+      const decumanusRouteCoords = [
+        [45.2272, 13.5966], // Pentagonal Tower
+        [45.2270, 13.5948], // Decumanus Middle
+        [45.2270, 13.5939], // Gothic House
+        [45.2268, 13.5925], // Towards Forum
+        [45.2267, 13.5910], // Marafor Square
+        [45.2275, 13.5898]  // Tip of Peninsula
+      ];
+
+      L.polyline(decumanusRouteCoords, {
+        color: '#D4AF37',
+        weight: 4,
+        opacity: 0.85,
+        dashArray: '8, 8',
+        lineCap: 'round'
+      }).addTo(map);
+
+      markersLayerGroup = L.layerGroup().addTo(map);
+      renderMarkers();
+    }
+
+    // --- 5. RENDER MAP MARKERS & POI LIST ---
+    function renderMarkers() {
+      markersLayerGroup.clearLayers();
+      const poiContainer = document.getElementById('poi-card-container');
+      poiContainer.innerHTML = '';
+
+      const filtered = currentFilter === 'all' 
+        ? POI_DATA 
+        : POI_DATA.filter(item => item.era === currentFilter);
+
+      filtered.forEach((poi) => {
+        // Create custom Leaflet DivIcon
+        const customIcon = L.divIcon({
+          className: 'custom-curator-divicon',
+          html: `<div id="marker-${poi.id}" class="custom-curator-marker ${poi.id === activePOI.id ? 'active-marker' : ''}" style="width: 32px; height: 32px; background-color: ${poi.color}; color: white; font-weight: bold; font-family: 'Cinzel', serif; font-size: 13px;">${poi.iconText}</div>`,
+          iconSize: [32, 32],
+          iconAnchor: [16, 16]
+        });
+
+        const marker = L.marker(poi.coords, { icon: customIcon }).addTo(markersLayerGroup);
+        
+        marker.on('click', () => {
+          selectPOI(poi.id, true);
+        });
+
+        // Create Sidebar Card
+        const card = document.createElement('div');
+        card.id = `poi-card-${poi.id}`;
+        card.className = `p-3.5 rounded-xl border transition-all cursor-pointer flex gap-3 items-center ${
+          poi.id === activePOI.id 
+            ? 'bg-istria-charcoal border-istria-gold shadow-glow-gold' 
+            : 'bg-stone-900/80 border-stone-800 hover:border-stone-700 hover:bg-stone-800'
+        }`;
+        
+        card.onclick = () => selectPOI(poi.id, true);
+
+        card.innerHTML = `
+          <div class="w-16 h-16 rounded-lg overflow-hidden flex-shrink-0 relative border border-stone-700">
+            <img src="${poi.thumb}" alt="${poi.title}" class="w-full h-full object-cover" />
+            <span class="absolute top-1 left-1 w-5 h-5 rounded-full flex items-center justify-center font-cinzel text-xs font-bold text-white shadow-md" style="background-color: ${poi.color};">${poi.iconText}</span>
+          </div>
+          <div class="flex-grow min-w-0">
+            <div class="flex items-center justify-between">
+              <span class="text-[10px] font-cinzel uppercase px-1.5 py-0.5 rounded bg-white/10 text-istria-gold">${poi.eraLabel}</span>
+            </div>
+            <h4 class="font-serif text-sm font-bold text-white truncate mt-1">${poi.title}</h4>
+            <p class="text-xs text-stone-400 font-serif line-clamp-1 mt-0.5">${poi.summary}</p>
+          </div>
+          <i data-lucide="chevron-right" class="w-4 h-4 text-stone-500 flex-shrink-0"></i>
+        `;
+
+        poiContainer.appendChild(card);
+      });
+
+      lucide.createIcons();
+    }
+
+    // --- 6. SELECT A POI (TWO-WAY SYNC) ---
+    function selectPOI(id, panTo = true) {
+      const found = POI_DATA.find(p => p.id === id);
+      if (!found) return;
+      activePOI = found;
+
+      // Update Map Marker classes
+      document.querySelectorAll('.custom-curator-marker').forEach(el => el.classList.remove('active-marker'));
+      const activeEl = document.getElementById(`marker-${id}`);
+      if (activeEl) activeEl.classList.add('active-marker');
+
+      // Update Sidebar Cards
+      document.querySelectorAll('[id^="poi-card-"]').forEach(el => {
+        el.className = 'p-3.5 rounded-xl border transition-all cursor-pointer flex gap-3 items-center bg-stone-900/80 border-stone-800 hover:border-stone-700 hover:bg-stone-800';
+      });
+      const activeCard = document.getElementById(`poi-card-${id}`);
+      if (activeCard) {
+        activeCard.className = 'p-3.5 rounded-xl border transition-all cursor-pointer flex gap-3 items-center bg-istria-charcoal border-istria-gold shadow-glow-gold';
+        activeCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+
+      // Update Floating Bottom Badge
+      document.getElementById('badge-icon').textContent = found.iconText;
+      document.getElementById('badge-icon').style.backgroundColor = found.color;
+      document.getElementById('badge-title').textContent = found.title;
+      document.getElementById('badge-subtitle').textContent = `${found.eraLabel} • ${found.originalTitle}`;
+
+      // Pan map to POI
+      if (panTo && map) {
+        map.flyTo(found.coords, 17, { duration: 1.2 });
+      }
+    }
+
+    // --- 7. ERA FILTERING ---
+    function filterMarkers(era) {
+      currentFilter = era;
+      document.querySelectorAll('.filter-btn').forEach(btn => {
+        if (btn.dataset.era === era) {
+          btn.className = 'filter-btn active-filter px-3.5 py-1.5 rounded-full text-xs font-medium bg-istria-gold text-istria-dark border border-istria-gold transition-all';
+        } else {
+          btn.className = 'filter-btn px-3.5 py-1.5 rounded-full text-xs font-medium bg-stone-800 text-stone-300 border border-stone-700 hover:border-istria-gold hover:text-white transition-all';
+        }
+      });
+
+      renderMarkers();
+
+      // If activePOI not in filter, switch to first in filter
+      const filtered = era === 'all' ? POI_DATA : POI_DATA.filter(item => item.era === era);
+      if (filtered.length > 0) {
+        selectPOI(filtered[0].id, true);
+      }
+    }
+
+    // --- 8. MODAL DETAILS ---
+    function openModalForActive() {
+      if (!activePOI) return;
+      const modal = document.getElementById('detail-modal');
+      document.getElementById('modal-img').src = activePOI.image;
+      document.getElementById('modal-tag').textContent = activePOI.eraLabel;
+      document.getElementById('modal-title').textContent = activePOI.title;
+      document.getElementById('modal-subtitle').textContent = activePOI.originalTitle;
+      document.getElementById('modal-desc').textContent = activePOI.deepDive;
+      document.getElementById('modal-coords').textContent = `${activePOI.coords[0]}° N, ${activePOI.coords[1]}° E`;
+
+      const pointsContainer = document.getElementById('modal-points');
+      pointsContainer.innerHTML = '';
+      activePOI.points.forEach(point => {
+        const li = document.createElement('li');
+        li.className = 'flex items-start gap-2';
+        li.innerHTML = `<i data-lucide="check-circle-2" class="w-4 h-4 text-istria-byzantine flex-shrink-0 mt-0.5"></i> <span>${point}</span>`;
+        pointsContainer.appendChild(li);
+      });
+
+      lucide.createIcons();
+      modal.classList.remove('hidden');
+    }
+
+    function closeDetailModal() {
+      document.getElementById('detail-modal').classList.add('hidden');
+    }
+
+    function focusOnMapAndClose() {
+      closeDetailModal();
+      document.getElementById('interactive-atlas').scrollIntoView({ behavior: 'smooth' });
+      selectPOI(activePOI.id, true);
+    }
+
+    // --- 9. HERO IMAGE SWITCHER ---
+    function changeHeroImage(imgSrc, title, desc) {
+      const heroImg = document.getElementById('hero-main-img');
+      heroImg.style.opacity = '0';
+      setTimeout(() => {
+        heroImg.src = imgSrc;
+        heroImg.style.opacity = '1';
+      }, 200);
+    }
+
+    // --- 10. RENDER GALLERY ---
+    function renderGallery() {
+      const galleryGrid = document.getElementById('photo-gallery-grid');
+      galleryGrid.innerHTML = '';
+
+      GALLERY_ITEMS.forEach((item, index) => {
+        const card = document.createElement('div');
+        card.className = 'group bg-white rounded-2xl overflow-hidden border border-istria-byzantine/20 shadow-paper-card hover:shadow-museum transition-all duration-300';
+        card.innerHTML = `
+          <div class="relative h-64 overflow-hidden">
+            <img src="${item.img}" alt="${item.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out" />
+            <div class="absolute inset-0 bg-gradient-to-t from-istria-dark/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-4">
+              <span class="text-xs text-istria-gold font-cinzel">PLATE N° 0${index + 1}</span>
+            </div>
+          </div>
+          <div class="p-5">
+            <span class="text-xs font-cinzel text-istria-terracotta">${item.subtitle}</span>
+            <h4 class="font-serif text-lg font-bold text-istria-dark mt-0.5">${item.title}</h4>
+            <p class="font-serif text-xs text-istria-slate mt-2 leading-relaxed">${item.desc}</p>
+          </div>
+        `;
+        galleryGrid.appendChild(card);
+      });
+    }
+
+    // --- 11. AMBIENT AUDIO SYNTHESIZER (Web Audio API) ---
+    // Synthesizes soothing sea wave noise + gentle pentatonic campanile chime
+    let audioCtx = null;
+    let isAudioPlaying = false;
+    let waveNoiseNode = null;
+    let waveGainNode = null;
+    let chimeInterval = null;
+
+    function toggleAmbientSound() {
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      if (isAudioPlaying) {
+        // Stop audio
+        if (waveGainNode) waveGainNode.gain.linearRampToValueAtTime(0.001, audioCtx.currentTime + 1);
+        clearInterval(chimeInterval);
+        isAudioPlaying = false;
+        document.getElementById('audio-btn-label').textContent = '海潮與鐘鳴：開';
+        document.getElementById('ambient-audio-btn').classList.remove('bg-istria-gold', 'text-istria-dark');
+        document.getElementById('ambient-audio-btn').classList.add('bg-istria-dark', 'text-istria-gold');
+      } else {
+        // Start audio
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+
+        // 1. Generate Pink/Brown sea wave noise
+        const bufferSize = audioCtx.sampleRate * 4;
+        const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = noiseBuffer.getChannelData(0);
+        let b0 = 0, b1 = 0, b2 = 0;
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          b0 = 0.99 * b0 + white * 0.05;
+          b1 = 0.95 * b1 + white * 0.1;
+          b2 = 0.85 * b2 + white * 0.2;
+          output[i] = (b0 + b1 + b2) * 0.15;
+        }
+
+        waveNoiseNode = audioCtx.createBufferSource();
+        waveNoiseNode.buffer = noiseBuffer;
+        waveNoiseNode.loop = true;
+
+        // Filter for underwater/sea breeze softness
+        const filter = audioCtx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(320, audioCtx.currentTime);
+
+        // LFO for wave surging motion
+        const lfo = audioCtx.createOscillator();
+        const lfoGain = audioCtx.createGain();
+        lfo.frequency.setValueAtTime(0.12, audioCtx.currentTime); // ~8 sec wave cycle
+        lfoGain.gain.setValueAtTime(180, audioCtx.currentTime);
+        lfo.connect(filter.frequency);
+        lfo.start();
+
+        waveGainNode = audioCtx.createGain();
+        waveGainNode.gain.setValueAtTime(0.01, audioCtx.currentTime);
+        waveGainNode.gain.linearRampToValueAtTime(0.15, audioCtx.currentTime + 2);
+
+        waveNoiseNode.connect(filter);
+        filter.connect(waveGainNode);
+        waveGainNode.connect(audioCtx.destination);
+        waveNoiseNode.start();
+
+        // 2. Gentle Ancient Campanile Bell Chime
+        playCampanileChime();
+        chimeInterval = setInterval(() => {
+          if (isAudioPlaying && Math.random() > 0.3) {
+            playCampanileChime();
+          }
+        }, 12000);
+
+        isAudioPlaying = true;
+        document.getElementById('audio-btn-label').textContent = '海潮與鐘鳴：播音中';
+        document.getElementById('ambient-audio-btn').classList.remove('bg-istria-dark', 'text-istria-gold');
+        document.getElementById('ambient-audio-btn').classList.add('bg-istria-gold', 'text-istria-dark');
+      }
+    }
+
+    function playCampanileChime() {
+      if (!audioCtx) return;
+      const freqs = [523.25, 659.25, 783.99, 1046.50]; // Pentatonic church tones (C5, E5, G5, C6)
+      const freq = freqs[Math.floor(Math.random() * freqs.length)];
+
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+      gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + 4.5);
+
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 4.6);
+    }
+
+    // --- 12. INITIALIZE ON LOAD ---
+    document.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      initMap();
+      renderGallery();
+      selectPOI(1, false);
+
+      document.getElementById('ambient-audio-btn').addEventListener('click', toggleAmbientSound);
+
+      // Close modal with ESC
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeDetailModal();
+      });
+    });
+  </script>
+</body>
+</html>
