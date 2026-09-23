@@ -58,9 +58,35 @@
 
   <style>
     /* Custom Scrollbar */
-    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
     ::-webkit-scrollbar-track { background: #FAF7F0; }
     ::-webkit-scrollbar-thumb { background: #C99E38; border-radius: 4px; }
+
+    /* Prominent Sidebar Card List Scrollbar */
+    #poi-card-container {
+      scrollbar-width: thin;
+      scrollbar-color: #A84232 rgba(201, 158, 56, 0.15);
+      cursor: grab;
+      user-select: none;
+    }
+    #poi-card-container:active {
+      cursor: grabbing;
+    }
+    #poi-card-container::-webkit-scrollbar {
+      width: 8px;
+    }
+    #poi-card-container::-webkit-scrollbar-track {
+      background: rgba(201, 158, 56, 0.12);
+      border-radius: 8px;
+    }
+    #poi-card-container::-webkit-scrollbar-thumb {
+      background: #A84232;
+      border-radius: 8px;
+      border: 2px solid #FAF7F0;
+    }
+    #poi-card-container::-webkit-scrollbar-thumb:hover {
+      background: #8E2825;
+    }
 
     /* OpenStreetMap Pure Integration & Attribution Suppression per Skill Rules */
     .leaflet-control-attribution {
@@ -389,16 +415,38 @@
         
         <!-- Left Column: 440px Fixed Width Scrollable POI Cards List -->
         <div class="w-full lg:w-[440px] lg:min-w-[440px] lg:max-w-[440px] flex-shrink-0 flex flex-col h-[620px] bg-stone-50/95 rounded-3xl border border-istria-byzantine/30 shadow-paper-card p-4 overflow-hidden z-20">
-          <div class="flex items-center justify-between pb-3 border-b border-istria-stone mb-3 flex-shrink-0">
-            <span class="font-cinzel text-xs font-bold text-istria-terracotta uppercase tracking-wider">
-              <i class="fa-solid fa-list-ul mr-1.5"></i> 走讀站點導覽清單
-            </span>
-            <span class="text-xs text-istria-slate font-serif">點擊卡片同步地圖</span>
+          
+          <!-- Header with Up / Down Quick Scroll Controls -->
+          <div class="flex items-center justify-between pb-3 border-b border-istria-stone mb-2.5 flex-shrink-0">
+            <div>
+              <span class="font-cinzel text-xs font-bold text-istria-terracotta uppercase tracking-wider block">
+                <i class="fa-solid fa-list-ul mr-1.5"></i> 走讀站點導覽 (10 站)
+              </span>
+              <span class="text-[11px] text-istria-slate font-serif">點擊卡片同步地圖 ｜ 支援上下拉動</span>
+            </div>
+            <!-- Scroll Step Buttons -->
+            <div class="flex items-center gap-1.5">
+              <button onclick="scrollPoiList('up')" class="w-8 h-8 rounded-xl bg-white border border-istria-byzantine/30 text-istria-dark hover:bg-istria-stone hover:text-istria-venetian flex items-center justify-center text-xs shadow-sm transition-all" title="往上拉動/滾動">
+                <i class="fa-solid fa-arrow-up"></i>
+              </button>
+              <button onclick="scrollPoiList('down')" class="w-8 h-8 rounded-xl bg-white border border-istria-byzantine/30 text-istria-dark hover:bg-istria-stone hover:text-istria-venetian flex items-center justify-center text-xs shadow-sm transition-all" title="往下拉動/滾動">
+                <i class="fa-solid fa-arrow-down"></i>
+              </button>
+            </div>
           </div>
 
-          <!-- Single Column Vertical List of POI Cards (Strict Column Flow) -->
+          <!-- Single Column Vertical List of POI Cards (Scrollable & Drag-to-scroll) -->
           <div id="poi-card-container" class="flex-1 flex flex-col gap-3 overflow-y-auto overflow-x-hidden pr-1.5 w-full" style="display: flex !important; flex-direction: column !important;">
             <!-- Rendered dynamically -->
+          </div>
+
+          <!-- Footer Scroll Cue / Fast Navigation Indicator -->
+          <div class="pt-2.5 mt-2 border-t border-istria-stone flex items-center justify-between text-[11px] text-istria-slate font-serif flex-shrink-0">
+            <span id="scroll-progress-label">↕ 滑鼠可按住上下拖曳拉動</span>
+            <button onclick="scrollPoiList('down')" class="text-istria-venetian font-bold hover:underline flex items-center gap-1">
+              <span>看下一站</span>
+              <i class="fa-solid fa-chevron-down text-[10px]"></i>
+            </button>
           </div>
         </div>
 
@@ -1288,10 +1336,73 @@
       osc.stop(audioCtx.currentTime + 4.6);
     }
 
-    // --- 12. INITIALIZATION ON DOM READY ---
+    // --- 12. SCROLL & DRAG-TO-SCROLL CONTROLS ---
+    function scrollPoiList(direction) {
+      const container = document.getElementById('poi-card-container');
+      if (!container) return;
+      const scrollStep = 180;
+      if (direction === 'up') {
+        container.scrollBy({ top: -scrollStep, behavior: 'smooth' });
+      } else {
+        container.scrollBy({ top: scrollStep, behavior: 'smooth' });
+      }
+    }
+
+    function initDragToScroll() {
+      const container = document.getElementById('poi-card-container');
+      if (!container) return;
+
+      let isDown = false;
+      let startY;
+      let scrollTop;
+      let moved = false;
+
+      container.addEventListener('mousedown', (e) => {
+        isDown = true;
+        moved = false;
+        startY = e.pageY - container.offsetTop;
+        scrollTop = container.scrollTop;
+      });
+
+      container.addEventListener('mouseleave', () => {
+        isDown = false;
+      });
+
+      container.addEventListener('mouseup', () => {
+        isDown = false;
+      });
+
+      container.addEventListener('mousemove', (e) => {
+        if (!isDown) return;
+        const y = e.pageY - container.offsetTop;
+        const walk = (y - startY) * 1.5;
+        if (Math.abs(walk) > 5) {
+          moved = true;
+        }
+        container.scrollTop = scrollTop - walk;
+      });
+
+      // Update progress indicator on scroll
+      container.addEventListener('scroll', () => {
+        const maxScroll = container.scrollHeight - container.clientHeight;
+        const current = container.scrollTop;
+        const percent = Math.min(100, Math.round((current / (maxScroll || 1)) * 100));
+        const label = document.getElementById('scroll-progress-label');
+        if (label) {
+          if (percent >= 95) {
+            label.textContent = `✓ 已瀏覽至底部（共 10 站）`;
+          } else {
+            label.textContent = `↕ 已瀏覽 ${percent}% ｜ 可繼續往下拉動`;
+          }
+        }
+      });
+    }
+
+    // --- 13. INITIALIZATION ON DOM READY ---
     document.addEventListener('DOMContentLoaded', () => {
       initMap();
       renderGallery();
+      initDragToScroll();
       selectPOI(1, false);
 
       document.getElementById('ambient-audio-btn').addEventListener('click', toggleAmbientSound);
